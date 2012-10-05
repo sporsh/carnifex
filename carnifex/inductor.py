@@ -24,6 +24,30 @@ class ProcessInductor(object):
         self.execute(processProtocol, executable, args)
         return deferred
 
+    def getOutput(self, executable, args=None):
+        """Execute a command and get the output of the finished process.
+        """
+        deferred = defer.Deferred()
+        processProtocol = _SummaryProcessProtocol(deferred)
+        self.execute(processProtocol, executable, args)
+        @deferred.addCallback
+        def getStdOut(tuple_):
+            stdout, _stderr, _returnCode = tuple_
+            return stdout
+        return deferred
+
+    def getExitStatus(self, executable, args=None):
+        """Execute a command and get the return code of the finished process.
+        """
+        deferred = defer.Deferred()
+        processProtocol = _SummaryProcessProtocol(deferred)
+        self.execute(processProtocol, executable, args)
+        @deferred.addCallback
+        def getStdOut(tuple_):
+            _stdout, _stderr, returnCode = tuple_
+            return returnCode
+        return deferred
+
 
 class _SummaryProcessProtocol(ProcessProtocol):
     """Gathers data of the process and delivers a summary when it completes.
