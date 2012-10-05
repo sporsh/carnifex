@@ -32,3 +32,15 @@ class InductorTest(TestCase):
                                result_status)
             self.assertEqual(result, expected_result)
         return result
+
+    def test_getOutput(self):
+        processFactory = ReactorProcessFactory(MockReactor())
+        inductor = ProcessInductor(processFactory)
+        output = inductor.getOutput(executable='foo')
+        print "OUTPUT", output
+
+    def test_getExitStatus(self):
+        processFactory = ReactorProcessFactory(MockReactor())
+        inductor = ProcessInductor(processFactory)
+        output = inductor.getExitStatus(executable='foo')
+        print "OUTPUT", output
