@@ -1,5 +1,5 @@
 from twisted.trial.unittest import TestCase
-from carnifex.process import ReactorProcessFactory
+from carnifex.localprocess import ReactorProcessFactory
 from twisted.internet import reactor
 from carnifex.inductor import ProcessInductor
 

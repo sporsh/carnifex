@@ -1,6 +1,6 @@
 from twisted.trial.unittest import TestCase
 from carnifex.inductor import ProcessInductor
-from carnifex.process import ReactorProcessFactory
+from carnifex.localprocess import ReactorProcessFactory
 from twisted.python import failure
 from twisted.internet.error import ProcessDone
 
