@@ -9,5 +9,5 @@ class ReactorProcessFactory(ProcessFactory):
 
     def spawnProcess(self, processProtocol, executable, args=(), env={},
                      path=None, uid=None, gid=None, usePTY=0, childFDs=None):
-        self.reactor.spawnProcess(processProtocol, executable, args, env,
-                                  path, uid, gid, usePTY, childFDs)
+        return self.reactor.spawnProcess(processProtocol, executable, args, env,
+                                         path, uid, gid, usePTY, childFDs)
