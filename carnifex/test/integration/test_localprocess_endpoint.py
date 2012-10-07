@@ -5,39 +5,48 @@ from twisted.internet import protocol, reactor, defer
 from carnifex.endpoint import InductorEndpoint
 
 
+class GatherProtocol(protocol.Protocol):
+    def __init__(self):
+        self.resultDeferred = defer.Deferred()
+        self.gatheredData = []
+
+    def dataReceived (self, data):
+        self.gatheredData.append(data)
+
+    def connectionLost (self, reason):
+        self.resultDeferred.callback((self.gatheredData, reason))
+
+
 class InductorEndpointTest(TestCase):
     """Test connecting a twisted protocol to a process.
     """
 
     def test_real_endpoint(self):
         executable = 'echo'
-        echo_text = "hello world!"
-        expected_data = echo_text + '\n'
-        #TODO: fix timeout
-        endpoint = InductorEndpoint(inductor, executable, args=(executable, echo_text))
+        echoText = "hello world!"
+        expectedGatheredData = [echoText + '\n']
+        expectedConnectionLostReason = ConnectionDone
 
-        dataDeferred = defer.Deferred()
-        connDeferred = defer.Deferred()
-        class MockProtocol(protocol.Protocol):
-            def dataReceived (self, data):
-                dataDeferred.callback(data)
-            def connectionLost (self, reason):
-                connDeferred.callback(reason)
+        inductor = LocalProcessInductor(reactor)
+        endpoint = InductorEndpoint(inductor, executable,
+                                    args=(executable, echoText),
+                                    timeout=1, reactor=reactor)
 
         protocolFactory = protocol.ClientFactory()
-        protocolFactory.protocol = MockProtocol
+        protocolFactory.protocol = GatherProtocol
         clientDeferred = endpoint.connect(protocolFactory)
 
         @clientDeferred.addCallback
-        def check_client(client):
-            self.assertIsInstance(client, MockProtocol)
+        def checkClient(client):
+            self.assertIsInstance(client, GatherProtocol)
+            return client.resultDeferred
 
-        @dataDeferred.addCallback
-        def check_received_data(data):
-            return self.assertEqual(data, expected_data)
+        @clientDeferred.addCallback
+        def checkGatheredData((gatheredData, connectionLostReason)):
+            self.assertEqual(gatheredData, expectedGatheredData)
+            return connectionLostReason
 
-        # Check that the connectionLost reason
-        self.assertFailure(connDeferred, ConnectionDone)
+        # Check that the connection was lost as expected
+        return self.assertFailure(clientDeferred, expectedConnectionLostReason)
 
-        return defer.DeferredList([clientDeferred, dataDeferred, connDeferred],
-                                  fireOnOneErrback=True)
+        return clientDeferred

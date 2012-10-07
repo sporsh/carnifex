@@ -1,9 +1,10 @@
 from twisted.trial.unittest import TestCase
 from twisted.internet.error import ConnectionDone
-from twisted.internet import protocol, defer
+from twisted.internet import protocol, defer, reactor
 from carnifex.endpoint import InductorEndpoint
 from carnifex.test.unit.mocs import MockProcessInductor
 
+stdout, stderr = 1, 2
 
 
 class InductorEndpointTest(TestCase):
@@ -11,7 +12,11 @@ class InductorEndpointTest(TestCase):
     """
 
     def test_endpoint(self):
-        relay_data = ['command output', 'info message']
+        fauxProcessData = [(stdout, 'some output'),
+                           (stderr, 'error message'),
+                           (stdout, 'info message'),
+                           (stderr, 'os failure')]
+
         inductor = MockProcessInductor(fauxProcessData)
         #TODO: fix timeout
         endpoint = InductorEndpoint(inductor, 'foo', ('foo'), reactor, timeout=1)
@@ -20,10 +25,6 @@ class InductorEndpointTest(TestCase):
         connDeferred = defer.Deferred()
         class MockProtocol(protocol.Protocol):
             data = []
-            def connectionMade(self):
-                for data in relay_data:
-                    self.transport.relayData(data)
-                self.transport.loseConnection()
             def dataReceived (self, data):
                 self.data.append(data)
             def connectionLost (self, reason):
@@ -40,7 +41,8 @@ class InductorEndpointTest(TestCase):
 
         @dataDeferred.addCallback
         def check_received_data(data):
-            return self.assertEqual(data, relay_data)
+            expected = [d for _, d in fauxProcessData]
+            return self.assertEqual(data, expected)
 
         # Check that the connectionLost reason
         self.assertFailure(connDeferred, ConnectionDone)
