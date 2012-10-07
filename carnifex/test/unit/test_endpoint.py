@@ -1,20 +1,8 @@
 from twisted.trial.unittest import TestCase
-from carnifex.inductor import ProcessInductor
-from carnifex.localprocess import ReactorProcessFactory
 from twisted.internet.error import ConnectionDone
 from twisted.internet import protocol, defer
 from carnifex.endpoint import InductorEndpoint
-
-
-class MockProcess(object):
-    def write(self, data):
-        pass
-
-    def writeSequence(self, sequence):
-        pass
-
-    def loseConnection(self):
-        pass
+from carnifex.test.unit.mocs import MockProcessInductor
 
 
 
