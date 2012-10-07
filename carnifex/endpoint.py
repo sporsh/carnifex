@@ -1,12 +1,14 @@
 from twisted.internet.endpoints import _WrappingFactory
 from twisted.internet.base import BaseConnector
 from twisted.internet.protocol import ProcessProtocol, connectionDone
+from twisted.internet import defer
+from twisted.python.failure import Failure
 
 
 class InductorEndpoint(object):
     """Endpoint that connects to a process spawned by an inductor.
     """
-    def __init__(self, inductor, executable, args, timeout=None, reactor=None):
+    def __init__(self, inductor, executable, args, reactor, timeout=None):
         self._inductor = inductor
         self._executable = executable
         self._args = args
@@ -14,12 +16,41 @@ class InductorEndpoint(object):
         self._reactor = reactor
 
     def connect(self, protocolFactory):
-        relay = RelayTransport()
-        wf = _WrappingFactory(protocolFactory)
-        connector = RelayConnector(relay, wf, self._timeout, self._reactor)
-        _process = self._inductor.execute(processProtocol, self._executable, self._args)
+        deferred = self._startProcess()
+        deferred.addCallback(self._connectRelay, protocolFactory)
+        deferred.addCallback(self._startRelay)
+        return deferred
+
+    def _startProcess(self):
+        connectedDeferred = defer.Deferred()
         processProtocol = RelayProcessProtocol(connectedDeferred)
+        self._inductor.execute(processProtocol, self._executable, self._args)
+        return connectedDeferred
+
+    def _connectRelay(self, process, protocolFactory):
+        # We're the process transport is open, so start the connection.
+        try:
+            wf = _WrappingFactory(protocolFactory)
+            connector = RelayConnector(process, wf, self._timeout, self._reactor)
+            connector.connect()
+        except:
+            return defer.fail()
         return wf._onConnection
+
+    def _startRelay(self, client):
+        pp = client.transport.connector.process
+        for _, data in pp.data:
+            client.dataReceived(data)
+        pp.protocol = client
+
+        @pp._endedDeferred.addBoth
+        def stopRelay(reason):
+            relay = client.transport
+            connector = relay.connector
+            relay.loseConnection(reason)
+            connector.connectionLost(reason)
+
+        return client
 
 
 class RelayTransport(object):
@@ -28,52 +59,57 @@ class RelayTransport(object):
     connected = False
     disconnected = False
 
-    def __init__(self, data=None):
-        self.data = data or []
+    def __init__(self, connector, reactor):
+        self.connector = connector
+        reactor.callLater(0, self.connectRelay)
 
-    def start(self, transport):
-        self.transport = transport
-        self.write = transport.write
-        self.writeSequence = transport.writeSequence
+    def connectRelay(self):
+        self.protocol = self.connector.buildProtocol(None)
         self.connected = True
+        self.protocol.makeConnection(self)
+
+    def _getTransport(self):
+        return getattr(self.connector.proces, 'transport')
+
+    def write(self, data):
+        transport = self._getTransport()
+        transport.write(data)
+
+    def writeSequence(self, data):
+        transport = self._getTransport()
+        transport.writeSequence(data)
 
     def loseConnection(self, reason=connectionDone):
-        protocol = self.protocol
-        del self.protocol
-        protocol.connectionLost(reason)
-        self.transport.loseConnection()
+        protocol = getattr(self, 'protocol', None)
+        if protocol:
+            del self.protocol
+            protocol.connectionLost(reason)
         self.disconnected = True
 
-    def relayData(self, data):
-        if hasattr(self, 'protocol'):
-            self.protocol.dataReceived(data)
-        else:
-            self.data.append(data)
-
     def failIfNotConnected(self, err):
+        print "FAIL IF NOT CONN"
         if (self.connected or self.disconnected or
             not hasattr(self, "connector")):
             return
+
+        self.connector.connectionFailed(Failure(err))
+        del self.connector
 
 
 class RelayConnector(BaseConnector):
     """Connect a protocol to a relaying transport.
     """
-    def __init__(self, relay, factory, timeout, reactor):
+    def __init__(self, process, factory, timeout, reactor):
         if timeout:
             assert not reactor is None, "Need an reactor to use timeout."
         BaseConnector.__init__(self, factory, timeout, reactor)
-        self.relay = relay
-        relay.connector = self
+        self.process = process
 
     def _makeTransport(self):
-        protocol = self.buildProtocol(None)
-        self.relay.protocol = protocol
-        protocol.makeConnection(self.relay)
-        return self.relay
-
-    def cancelTimeout(self):
-        BaseConnector.cancelTimeout(self)
+        print "MAKE TRANSPORT"
+        relay = RelayTransport(self, self.reactor)
+        self.process.relay = relay
+        return relay
 
 
 class RelayProcessProtocol(ProcessProtocol):
