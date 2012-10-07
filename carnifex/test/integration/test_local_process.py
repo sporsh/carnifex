@@ -1,7 +1,6 @@
 from twisted.trial.unittest import TestCase
-from carnifex.localprocess import ReactorProcessFactory
+from carnifex.localprocess import LocalProcessInductor
 from twisted.internet import reactor
-from carnifex.inductor import ProcessInductor
 
 
 class InductorTest(TestCase):
@@ -10,8 +9,7 @@ class InductorTest(TestCase):
         echo_text = "hello world!"
         expected_stdout = echo_text + '\n'
 
-        processFactory = ReactorProcessFactory(reactor)
-        inductor = ProcessInductor(processFactory)
+        inductor = LocalProcessInductor(reactor)
         result = inductor.run(executable, args=(executable, echo_text))
         @result.addCallback
         def check_result(result):

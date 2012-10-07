@@ -1,6 +1,5 @@
 from twisted.trial.unittest import TestCase
-from carnifex.inductor import ProcessInductor
-from carnifex.localprocess import ReactorProcessFactory
+from carnifex.localprocess import LocalProcessInductor
 from twisted.internet.error import ConnectionDone
 from twisted.internet import protocol, reactor, defer
 from carnifex.endpoint import InductorEndpoint
@@ -11,8 +10,6 @@ class InductorEndpointTest(TestCase):
     """
 
     def test_real_endpoint(self):
-        processFactory = ReactorProcessFactory(reactor)
-        inductor = ProcessInductor(processFactory)
         executable = 'echo'
         echo_text = "hello world!"
         expected_data = echo_text + '\n'

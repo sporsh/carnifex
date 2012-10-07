@@ -16,12 +16,6 @@ class MockProcess(object):
     def loseConnection(self):
         pass
 
-class MockReactor(object):
-    def spawnProcess(self, processProtocol, executable, args, env, path,
-                     uid, gid, usePTY, childFDs):
-        process = MockProcess()
-        processProtocol.makeConnection(process)
-        return process
 
 
 class InductorEndpointTest(TestCase):
@@ -30,10 +24,9 @@ class InductorEndpointTest(TestCase):
 
     def test_endpoint(self):
         relay_data = ['command output', 'info message']
-        processFactory = ReactorProcessFactory(MockReactor())
-        inductor = ProcessInductor(processFactory)
+        inductor = MockProcessInductor(fauxProcessData)
         #TODO: fix timeout
-        endpoint = InductorEndpoint(inductor, 'foo', args=('foo'))
+        endpoint = InductorEndpoint(inductor, 'foo', ('foo'), reactor, timeout=1)
 
         dataDeferred = defer.Deferred()
         connDeferred = defer.Deferred()

@@ -1,6 +1,5 @@
 from twisted.trial.unittest import TestCase
 from carnifex.inductor import ProcessInductor
-from carnifex.localprocess import ReactorProcessFactory
 from twisted.python import failure
 from twisted.internet.error import ProcessDone
 
@@ -9,9 +8,8 @@ stderr_data = ['error message', 'system failure']
 result_status = 0
 
 
-class MockReactor(object):
-    def spawnProcess(self, processProtocol, executable, args, env, path,
-                     uid, gid, usePTY, childFDs):
+class MockProcessInductor(ProcessInductor):
+    def execute(self, processProtocol, executable, args=None):
         for data in stdout_data:
             processProtocol.outReceived(data)
         for data in stderr_data:
@@ -22,8 +20,7 @@ class MockReactor(object):
 
 class InductorTest(TestCase):
     def test_run(self):
-        processFactory = ReactorProcessFactory(MockReactor())
-        inductor = ProcessInductor(processFactory)
+        inductor = MockProcessInductor()
         result = inductor.run(executable='foo')
         @result.addCallback
         def check_result(result):
@@ -34,8 +31,7 @@ class InductorTest(TestCase):
         return result
 
     def test_getOutput(self):
-        processFactory = ReactorProcessFactory(MockReactor())
-        inductor = ProcessInductor(processFactory)
+        inductor = MockProcessInductor()
         output = inductor.getOutput(executable='foo')
         @output.addCallback
         def check_output(result):
@@ -44,8 +40,7 @@ class InductorTest(TestCase):
         return output
 
     def test_getExitStatus(self):
-        processFactory = ReactorProcessFactory(MockReactor())
-        inductor = ProcessInductor(processFactory)
+        inductor = MockProcessInductor()
         output = inductor.getExitStatus(executable='foo')
         @output.addCallback
         def check_output(result):
