@@ -17,8 +17,8 @@ class InductorEndpoint(object):
         relay = RelayTransport()
         wf = _WrappingFactory(protocolFactory)
         connector = RelayConnector(relay, wf, self._timeout, self._reactor)
-        processProtocol = _RelayTransportProcessProtocol(relay, connector)
         _process = self._inductor.execute(processProtocol, self._executable, self._args)
+        processProtocol = RelayProcessProtocol(connectedDeferred)
         return wf._onConnection
 
 
@@ -76,23 +76,30 @@ class RelayConnector(BaseConnector):
         BaseConnector.cancelTimeout(self)
 
 
-class _RelayTransportProcessProtocol(ProcessProtocol):
+class RelayProcessProtocol(ProcessProtocol):
     """A process protocol that relays to a regular protocol.
     """
-    def __init__(self, relay, connector):
-        self.relay = relay
-        self.connector = connector
+    def __init__(self, connectedDeferred):
+        self._connectedDeferred = connectedDeferred
+        self._endedDeferred = defer.Deferred()
+        self.data = []
 
     def connectionMade(self):
-        self.relay.start(self.transport)
-        self.connector.connect()
+        """""Process has started and we are ready to relay to the protocol.
+        """
+        # Connection to the process is made, so callback to start relaying.
+        self._connectedDeferred.callback(self)
 
     def childDataReceived(self, childFD, data):
         """Relay data received on any file descriptor to the process
         """
         #TODO: we might want to enable configuration of which fds to relay.
-        self.relay.relayData(data)
+        protocol = getattr(self, 'protocol', None)
+        if protocol:
+            protocol.dataReceived(data)
+        else:
+            self.data.append((childFD, data))
 
     def processEnded(self, reason):
-        self.relay.loseConnection(reason)
-        self.connector.connectionLost(reason)
+        # The process has ended, so we need to stop relaying.
+        self._endedDeferred.callback(reason)
