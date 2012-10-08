@@ -18,7 +18,6 @@ class InductorEndpointTest(TestCase):
                            (stderr, 'os failure')]
 
         inductor = MockProcessInductor(fauxProcessData)
-        #TODO: fix timeout
         endpoint = InductorEndpoint(inductor, 'foo', ('foo'), reactor, timeout=1)
 
         dataDeferred = defer.Deferred()

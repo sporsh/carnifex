@@ -16,40 +16,56 @@ class InductorEndpoint(object):
         self._reactor = reactor
 
     def connect(self, protocolFactory):
+        """Starts a process and connect a protocol to it.
+        """
         deferred = self._startProcess()
         deferred.addCallback(self._connectRelay, protocolFactory)
         deferred.addCallback(self._startRelay)
         return deferred
 
     def _startProcess(self):
+        """Use the inductor to start the process we want to relay data from.
+        """
         connectedDeferred = defer.Deferred()
         processProtocol = RelayProcessProtocol(connectedDeferred)
         self._inductor.execute(processProtocol, self._executable, self._args)
         return connectedDeferred
 
     def _connectRelay(self, process, protocolFactory):
-        # We're the process transport is open, so start the connection.
+        """Set up and connect the protocol we want to relay to the process.
+        This method is automatically called when the process is started,
+        and we are ready to relay through it.
+        """
         try:
             wf = _WrappingFactory(protocolFactory)
             connector = RelayConnector(process, wf, self._timeout, self._reactor)
             connector.connect()
         except:
             return defer.fail()
+        # Return a deferred that is called back when the protocol is connected.
         return wf._onConnection
 
     def _startRelay(self, client):
-        pp = client.transport.connector.process
-        for _, data in pp.data:
+        """Start relaying data between the process and the protocol.
+        This method is called when the protocol is connected.
+        """
+        process = client.transport.connector.process
+        # Relay any buffered data that was received from the process before
+        # we got connected and started relaying.
+        for _, data in process.data:
             client.dataReceived(data)
-        pp.protocol = client
+        process.protocol = client
 
-        @pp._endedDeferred.addBoth
+        @process._endedDeferred.addBoth
         def stopRelay(reason):
+            """Stop relaying data. Called when the process has ended.
+            """
             relay = client.transport
-            connector = relay.connector
             relay.loseConnection(reason)
+            connector = relay.connector
             connector.connectionLost(reason)
 
+        # Pass through the client protocol.
         return client
 
 
@@ -64,6 +80,8 @@ class RelayTransport(object):
         reactor.callLater(0, self.connectRelay)
 
     def connectRelay(self):
+        """Builds the target protocol and connects it to the relay transport.
+        """
         self.protocol = self.connector.buildProtocol(None)
         self.connected = True
         self.protocol.makeConnection(self)
@@ -87,7 +105,6 @@ class RelayTransport(object):
         self.disconnected = True
 
     def failIfNotConnected(self, err):
-        print "FAIL IF NOT CONN"
         if (self.connected or self.disconnected or
             not hasattr(self, "connector")):
             return
@@ -106,7 +123,6 @@ class RelayConnector(BaseConnector):
         self.process = process
 
     def _makeTransport(self):
-        print "MAKE TRANSPORT"
         relay = RelayTransport(self, self.reactor)
         self.process.relay = relay
         return relay
@@ -121,15 +137,13 @@ class RelayProcessProtocol(ProcessProtocol):
         self.data = []
 
     def connectionMade(self):
-        """""Process has started and we are ready to relay to the protocol.
-        """
-        # Connection to the process is made, so callback to start relaying.
+        # We're connected to the process, so fire a deferred to connect the
+        # target protocol and start relaying.
         self._connectedDeferred.callback(self)
 
     def childDataReceived(self, childFD, data):
         """Relay data received on any file descriptor to the process
         """
-        #TODO: we might want to enable configuration of which fds to relay.
         protocol = getattr(self, 'protocol', None)
         if protocol:
             protocol.dataReceived(data)
