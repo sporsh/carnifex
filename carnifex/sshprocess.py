@@ -22,7 +22,8 @@ class SSHProcessInductor(ProcessInductor):
         self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
                                            bindAddress)
 
-    def execute(self, processProtocol, executable, args=None, uid=None):
+    def execute(self, processProtocol, executable, args=(), env={},
+                path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         uid = uid or os.getuid()
         if isinstance(uid, int):
             user = pwd.getpwuid(uid).pw_name

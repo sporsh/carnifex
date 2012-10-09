@@ -6,20 +6,23 @@ class ProcessInductor(object):
     """Creates and follow up processes of local or remotely executed commands.
     """
 
-    def execute(self, processProtocol, executable, args=None):
+    def execute(self, processProtocol, executable, args=(), env={},
+                path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         """Form a command and start a process in the desired environment.
         """
         raise NotImplementedError()
 
-    def run(self, executable, args=None):
+    def run(self, executable, args=(), env={}, path=None,
+            uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a command and return the results of the completed run.
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args)
+        self.execute(processProtocol, executable, args, uid)
         return deferred
 
-    def getOutput(self, executable, args=None):
+    def getOutput(self, executable, args=(), env={}, path=None,
+                  uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a command and get the output of the finished process.
         """
         deferred = defer.Deferred()
@@ -31,7 +34,8 @@ class ProcessInductor(object):
             return stdout
         return deferred
 
-    def getExitStatus(self, executable, args=None):
+    def getExitStatus(self, executable, args=(), env={}, path=None,
+                      uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a command and get the return code of the finished process.
         """
         deferred = defer.Deferred()

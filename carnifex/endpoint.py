@@ -8,12 +8,11 @@ from twisted.python.failure import Failure
 class InductorEndpoint(object):
     """Endpoint that connects to a process spawned by an inductor.
     """
-    def __init__(self, inductor, executable, args, reactor, timeout=None):
-        self._inductor = inductor
-        self._executable = executable
-        self._args = args
-        self._timeout = timeout
-        self._reactor = reactor
+    def __init__(self, inductor, executable, args=(), env={}, path=None,
+                 uid=None, gid=None, usePTY=0, childFDs=None, timeout=None):
+        self.inductor = inductor
+        self.timeout = timeout
+        self.inductorArgs = (executable, args, env, path, uid, gid, usePTY, childFDs)
 
     def connect(self, protocolFactory):
         """Starts a process and connect a protocol to it.
@@ -28,7 +27,7 @@ class InductorEndpoint(object):
         """
         connectedDeferred = defer.Deferred()
         processProtocol = RelayProcessProtocol(connectedDeferred)
-        self._inductor.execute(processProtocol, self._executable, self._args)
+        self.inductor.execute(processProtocol, *self.inductorArgs)
         return connectedDeferred
 
     def _connectRelay(self, process, protocolFactory):
@@ -38,7 +37,8 @@ class InductorEndpoint(object):
         """
         try:
             wf = _WrappingFactory(protocolFactory)
-            connector = RelayConnector(process, wf, self._timeout, self._reactor)
+            connector = RelayConnector(process, wf, self.timeout,
+                                       self.inductor.reactor)
             connector.connect()
         except:
             return defer.fail()

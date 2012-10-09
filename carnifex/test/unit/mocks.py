@@ -30,7 +30,8 @@ class MockProcessInductor(ProcessInductor):
         self.reactor = reactor
         self.fauxProcessData = fauxProcessData
 
-    def execute(self, processProtocol, executable, args=None):
+    def execute(self, processProtocol, executable, args=(), env={},
+                path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         process = MockProcess(processProtocol)
         process.run(self.fauxProcessData)
         processProtocol.makeConnection(process)

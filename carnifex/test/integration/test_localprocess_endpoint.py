@@ -28,9 +28,8 @@ class InductorEndpointTest(TestCase):
         expectedConnectionLostReason = ConnectionDone
 
         inductor = LocalProcessInductor(reactor)
-        endpoint = InductorEndpoint(inductor, executable,
-                                    args=(executable, echoText),
-                                    timeout=1, reactor=reactor)
+        endpoint = InductorEndpoint(inductor, executable=executable,
+                                    args=(executable, echoText), timeout=1)
 
         protocolFactory = protocol.ClientFactory()
         protocolFactory.protocol = GatherProtocol
