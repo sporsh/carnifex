@@ -18,6 +18,7 @@ from carnifex.inductor import ProcessInductor
 class SSHProcessInductor(ProcessInductor):
 
     def __init__(self, reactor, host, port, timeout=30, bindAddress=None):
+        self.reactor = reactor
         self._connections = {}
         self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
                                            bindAddress)
