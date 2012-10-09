@@ -1,3 +1,5 @@
+import os
+import pwd
 import struct
 from twisted.python import failure
 from twisted.internet import defer
@@ -15,13 +17,17 @@ from carnifex.inductor import ProcessInductor
 
 class SSHProcessInductor(ProcessInductor):
 
-    def __init__(self, reactor, user, host, port, timeout=30, bindAddress=None):
-        self.defaultUser = user
-        self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout, bindAddress)
+    def __init__(self, reactor, host, port, timeout=30, bindAddress=None):
         self._connections = {}
+        self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
+                                           bindAddress)
 
-    def execute(self, processProtocol, executable, args=None, user=None):
-        user = user or self.defaultUser
+    def execute(self, processProtocol, executable, args=None, uid=None):
+        uid = uid or os.getuid()
+        if isinstance(uid, int):
+            user = pwd.getpwuid(uid).pw_name
+        else:
+            user = uid
 
         args = args or (executable, )
         command = common.NS(' '.join(args))

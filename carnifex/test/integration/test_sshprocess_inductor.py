@@ -4,7 +4,7 @@ from carnifex.sshprocess import SSHProcessInductor
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet.error import ProcessTerminated, ProcessDone
 
-USER = 'localuser'
+USER = None # None means to defaults to current user
 HOST = 'localhost'
 PORT = 22
 
@@ -14,7 +14,7 @@ ECHO_COMMAND = 'echo'
 
 class InductorTest(TestCase):
     def setUp(self):
-        self.inductor = SSHProcessInductor(reactor, USER, HOST, PORT)
+        self.inductor = SSHProcessInductor(reactor, HOST, PORT)
 
     def tearDown(self):
         inductor = self.inductor
