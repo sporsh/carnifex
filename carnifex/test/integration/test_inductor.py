@@ -3,6 +3,7 @@ from twisted.trial.unittest import TestCase
 from carnifex.sshprocess import SSHProcessInductor
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet.error import ProcessTerminated, ProcessDone
+from carnifex.localprocess import LocalProcessInductor
 
 UID = None # indicate that we want to run processes as the current user.
 
@@ -47,7 +48,7 @@ class InductorTestMixin(object):
         disconnectedDeferred = defer.Deferred()
         protocol = ProcessProtocol()
         protocol.processEnded = disconnectedDeferred.callback
-        resultDeferred = self.inductor.run(executable, args, uid=self.uid)
+        resultDeferred = self.inductor.run(executable, args, uid=UID)
         @resultDeferred.addCallback
         def checkResult((stdin, stderr, exitCode)):
             self.assertEqual(stdin, echoTransform(echoText), "stdout not as expected")
@@ -55,18 +56,23 @@ class InductorTestMixin(object):
             self.assertEqual(exitCode, 0, "nonzero exit code")
 
         return resultDeferred
+
+
+class LocalProcessInductorTest(TestCase, InductorTestMixin):
+    def setUp(self):
+        from twisted.internet import reactor
+        self.inductor = LocalProcessInductor(reactor)
+
+
 class SSHProcessInductorTest(TestCase, InductorTestMixin):
     """This test need to authenticate the connect to an ssh server.
     """
     def setUp(self):
         from twisted.internet import reactor
-        self.uid = None # indicate that we want to run as the current user.
-        self.host = 'localhost'
-        self.port = 22
-        self.inductor = SSHProcessInductor(reactor, self.host, self.port)
+        host, port = 'localhost', 22
+        self.inductor = SSHProcessInductor(reactor, host, port)
 
     def tearDown(self):
-        InductorTestMixin
         inductor = self.inductor
         self.inductor = None
         inductor.disconnectAll()
