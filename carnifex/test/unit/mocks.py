@@ -26,7 +26,8 @@ class MockProcess(BaseProcess):
 
 
 class MockProcessInductor(ProcessInductor):
-    def __init__(self, fauxProcessData):
+    def __init__(self, reactor, fauxProcessData):
+        self.reactor = reactor
         self.fauxProcessData = fauxProcessData
 
     def execute(self, processProtocol, executable, args=None):

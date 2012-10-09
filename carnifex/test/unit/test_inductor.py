@@ -10,7 +10,7 @@ fauxProcessData = [(stdout, 'some output'),
 
 class InductorTest(TestCase):
     def test_run(self):
-        inductor = MockProcessInductor(fauxProcessData)
+        inductor = MockProcessInductor(None, fauxProcessData)
         result = inductor.run(executable='foo')
         @result.addCallback
         def check_result(result):
@@ -23,7 +23,7 @@ class InductorTest(TestCase):
         return result
 
     def test_getOutput(self):
-        inductor = MockProcessInductor(fauxProcessData)
+        inductor = MockProcessInductor(None, fauxProcessData)
         output = inductor.getOutput(executable='foo')
         @output.addCallback
         def check_output(result):
@@ -33,7 +33,7 @@ class InductorTest(TestCase):
         return output
 
     def test_getExitStatus(self):
-        inductor = MockProcessInductor(fauxProcessData)
+        inductor = MockProcessInductor(None, fauxProcessData)
         output = inductor.getExitStatus(executable='foo')
         @output.addCallback
         def check_output(result):
