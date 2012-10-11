@@ -1,16 +1,24 @@
-carnifex
+Carnifex
 ========
 
-Enable execution of processes locally or on a remote machine (eg. over SSH) transparantly with the same API.
-Carnifex is based on python twisted, and extend many of twisted's classes.
+Carnifex abstracts execution and running processes weither it be locally,
+or remotely on another machine. Current implementations support local sub
+processes and remote processes over ssh.
 
 
-Endpoints
+Inductor - control execution
 --------
 
-An endpoint object is provided to enable connecting a twisted Protocol to a process.
-This makes it possible to hook a network protocol to the process.
+Using Twisted framweork, it enables you to control execution of the process
+with a process protocol. Define a protocol that handle communication with
+the process, and carnifex will take care of running the process both locally
+and/or remotely.
 
-An example use case is to connect a network protocol to a netcat process (local or remote).
-For example you can start a netcat process on a remote machine and connect a server or client protocol to it.
-This will enable you to do forwarding/tunneling over ssh even if the ssh server does not allow it directly.
+
+Endpoint - use a process as network transport
+--------
+
+A endpoint adaption is provided to make it possible to connect any Twisted
+network protocol to a process. This mean you can have a process act as if
+it is the network transport layer. This is ecpecially useful for captured
+network data or live interaction via network tools like netcat.
