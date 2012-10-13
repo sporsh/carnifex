@@ -36,6 +36,11 @@ class InductorTestMixin(object):
         self.inductor.execute(protocol, FAILING_COMMAND, uid=UID)
         # Process should return a ProcessTerminated failure
         # when it exits with a nonzero exit code
+        @disconnectedDeferred.addErrback
+        def checkExitCode(failure):
+            exitCode = failure.value.exitCode
+            self.assertNotEqual(exitCode, 0)
+            return failure
         return self.assertFailure(disconnectedDeferred, ProcessTerminated)
 
     def test_execute_echo_return(self):
