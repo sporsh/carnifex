@@ -18,7 +18,8 @@ class ProcessInductor(object):
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args, uid)
+        self.execute(processProtocol, executable, args, env,
+                     path, uid, gid, usePTY, childFDs)
         return deferred
 
     def getOutput(self, executable, args=(), env={}, path=None,
@@ -27,7 +28,8 @@ class ProcessInductor(object):
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args)
+        self.execute(processProtocol, executable, args, env,
+                     path, uid, gid, usePTY, childFDs)
         @deferred.addCallback
         def getStdOut(tuple_):
             stdout, _stderr, _returnCode = tuple_
@@ -40,7 +42,8 @@ class ProcessInductor(object):
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args)
+        self.execute(processProtocol, executable, args, env,
+                     path, uid, gid, usePTY, childFDs)
         @deferred.addCallback
         def getStdOut(tuple_):
             _stdout, _stderr, returnCode = tuple_
