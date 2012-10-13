@@ -2,6 +2,7 @@ import os
 import pwd
 import struct
 from twisted.python import failure
+from twisted.python.win32 import quoteArguments
 from twisted.internet import defer
 from twisted.internet.error import ProcessDone, ProcessTerminated
 from twisted.internet.protocol import ClientFactory
@@ -32,7 +33,9 @@ class SSHProcessInductor(ProcessInductor):
             user = uid
 
         args = args or (executable, )
-        command = common.NS(' '.join(args))
+        cmdline = quoteArguments(args)
+        command = common.NS(cmdline)
+#        command = common.NS(' '.join(args))
 
         sessionOpenDeferred = defer.Deferred()
         session = SSHSession(sessionOpenDeferred, processProtocol)
@@ -136,9 +139,6 @@ class SSHSession(SSHChannel):
         protocol = self.protocol
         del self.protocol
         protocol.processEnded(reason)
-
-    def requestReceived(self, requestType, data):
-        return SSHChannel.requestReceived(self, requestType, data)
 
     def dataReceived(self, data):
             self.protocol.childDataReceived(1, data)
