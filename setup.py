@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-readme_md = open('README.md', 'r').read()
+readme = open('README.rst', 'r').read()
 
 setup(
       name='carnifex',
@@ -31,5 +31,5 @@ setup(
                    'Topic :: Software Development :: Libraries :: Python Modules',
                    'Topic :: Terminals'
                    ],
-      long_description=readme_md
+      long_description=readme
       )

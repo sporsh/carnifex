@@ -7,7 +7,7 @@ processes and remote processes over ssh.
 
 
 Inductor - control execution
---------
+----------------------------
 
 Using Twisted framweork, it enables you to control execution of the process
 with a process protocol. Define a protocol that handle communication with
@@ -16,7 +16,7 @@ and/or remotely.
 
 
 Endpoint - use a process as network transport
---------
+---------------------------------------------
 
 A endpoint adaption is provided to make it possible to connect any Twisted
 network protocol to a process. This mean you can have a process act as if
