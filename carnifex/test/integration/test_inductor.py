@@ -9,10 +9,7 @@ UID = None # indicate that we want to run processes as the current user.
 
 SUCCEEDING_COMMAND = 'true' # `true`should return exitcode 0
 FAILING_COMMAND = 'false' # `false`should return a nonzero exitcode
-ECHO_COMMAND = 'echo' # 'echo` should echo back on stdout
-
-# `echo` return an additional newline after the given text to echo.
-echoTransform = lambda text: text + '\n'
+PYTHON_COMMAND = 'python'
 
 
 class InductorTestMixin(object):
@@ -43,23 +40,29 @@ class InductorTestMixin(object):
             return failure
         return self.assertFailure(disconnectedDeferred, ProcessTerminated)
 
-    def test_execute_echo_return(self):
+    def test_run_stdout_stderr_exit(self):
         """Check that we get the expected stdout, stderr and exit code
         """
-        executable = ECHO_COMMAND
-        echoText = "some text to be echoed"
-        args = (executable, echoText)
+        executable = PYTHON_COMMAND
+        stdoutText = "output out o text"
+        stderrText = "error err e text"
+        exitCode = 47
+        pythonScript = ("import sys;"
+                        "sys.stdout.write('%s');"
+                        "sys.stderr.write('%s');"
+                        "exit(%i);"
+                        % (stdoutText, stderrText, exitCode))
+        args = (executable, '-c', pythonScript)
 
         disconnectedDeferred = defer.Deferred()
         protocol = ProcessProtocol()
         protocol.processEnded = disconnectedDeferred.callback
         resultDeferred = self.inductor.run(executable, args, uid=UID)
         @resultDeferred.addCallback
-        def checkResult((stdin, stderr, exitCode)):
-            self.assertEqual(stdin, echoTransform(echoText), "stdout not as expected")
-            self.assertEqual(stderr, '', "unexpected data on stderr")
-            self.assertEqual(exitCode, 0, "nonzero exit code")
-
+        def checkResult((r_stdoutText, r_stderrText, r_exitCode)):
+            self.assertEqual(r_stdoutText, stdoutText, "stdout not as expected")
+            self.assertEqual(r_stderrText, stderrText, "stderr not as expected")
+            self.assertEqual(r_exitCode, exitCode, "unexpected exit code")
         return resultDeferred
 
 
