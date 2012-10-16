@@ -169,14 +169,10 @@ class SSHSession(SSHChannel):
             pass
 
     def request_exit_status(self, data):
-        """
-        When the command running at the other end terminates, the following
-        message can be sent to return the exit status of the command.
-        Returning the status is RECOMMENDED.  No acknowledgement is sent for
-        this message.  The channel needs to be closed with
-        SSH_MSG_CHANNEL_CLOSE after this message.
+        """Called when the command running at the other end terminates with an
+        exit status.
 
-        The client MAY ignore these messages.
+        @param data: The ssh message
 
         byte      SSH_MSG_CHANNEL_REQUEST
         uint32    recipient channel
@@ -187,10 +183,9 @@ class SSHSession(SSHChannel):
         self.exitCode = int(struct.unpack('>L', data)[0])
 
     def request_exit_signal(self, data):
-        """
-        The remote command may also terminate violently due to a signal.
-        Such a condition can be indicated by the following message.  A zero
-        'exit_status' usually means that the command terminated successfully.
+        """Called when remote command terminate violently due to a signal.
+
+        @param data:  The ssh message
 
         byte      SSH_MSG_CHANNEL_REQUEST
         uint32    recipient channel
