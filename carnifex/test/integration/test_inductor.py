@@ -43,7 +43,6 @@ class InductorTestMixin(object):
     def test_run_stdout_stderr_exit(self):
         """Check that we get the expected stdout, stderr and exit code
         """
-        executable = PYTHON_COMMAND
         stdoutText = "output out o text"
         stderrText = "error err e text"
         exitCode = 47
@@ -52,12 +51,12 @@ class InductorTestMixin(object):
                         "sys.stderr.write('%s');"
                         "exit(%i);"
                         % (stdoutText, stderrText, exitCode))
-        args = (executable, '-c', pythonScript)
+        args = (PYTHON_COMMAND, '-c', pythonScript)
 
         disconnectedDeferred = defer.Deferred()
         protocol = ProcessProtocol()
         protocol.processEnded = disconnectedDeferred.callback
-        resultDeferred = self.inductor.run(executable, args, uid=UID)
+        resultDeferred = self.inductor.run(args[0], args, uid=UID)
         @resultDeferred.addCallback
         def checkResult((r_stdoutText, r_stderrText, r_exitCode)):
             self.assertEqual(r_stdoutText, stdoutText, "stdout not as expected")
