@@ -36,7 +36,7 @@ class ProcessInductor(object):
             return stdout
         return deferred
 
-    def getExitStatus(self, executable, args=(), env={}, path=None,
+    def getExitCode(self, executable, args=(), env={}, path=None,
                       uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a command and get the return code of the finished process.
         """
@@ -46,8 +46,8 @@ class ProcessInductor(object):
                      path, uid, gid, usePTY, childFDs)
         @deferred.addCallback
         def getStdOut(tuple_):
-            _stdout, _stderr, returnCode = tuple_
-            return returnCode
+            _stdout, _stderr, exitCode = tuple_
+            return exitCode
         return deferred
 
 
@@ -55,7 +55,7 @@ class _SummaryProcessProtocol(ProcessProtocol):
     """Gathers data of the process and delivers a summary when it completes.
     """
 
-    def __init__(self, deferred, stdout=True, stderr=True, returnCode=True,
+    def __init__(self, deferred, stdout=True, stderr=True, exitCode=True,
                  mergeErr=False):
         """
         @param deferred: the deferred to callback with the summary
@@ -77,6 +77,6 @@ class _SummaryProcessProtocol(ProcessProtocol):
     def processEnded(self, reason):
         stdout = ''.join(getattr(self, 'bufOut', []))
         stderr = ''.join(getattr(self, 'bufErr', []))
-        returnCode = reason.value.exitCode
-        result = (stdout, stderr, returnCode)
+        exitCode = reason.value.exitCode
+        result = (stdout, stderr, exitCode)
         self.deferred.callback(result)

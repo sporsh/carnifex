@@ -32,11 +32,11 @@ class InductorTest(TestCase):
             self.assertEqual(result, expected_stdout)
         return output
 
-    def test_getExitStatus(self):
-        inductor = MockProcessInductor(None, fauxProcessData)
-        output = inductor.getExitStatus(executable='foo')
+    def test_getExitCode(self):
+        expectedExitCode = 47
+        inductor = MockProcessInductor(None, fauxProcessData, exitCode=expectedExitCode)
+        output = inductor.getExitCode(executable='foo')
         @output.addCallback
-        def check_output(result):
-            expected_result = 0
-            self.assertEqual(result, expected_result)
+        def checkExitCode(exitCode):
+            self.assertEqual(exitCode, expectedExitCode)
         return output
