@@ -47,6 +47,10 @@ class SSHProcessInductor(ProcessInductor):
             connection.openChannel(session)
             @sessionOpenDeferred.addCallback
             def sessionOpened(specificData):
+                # Send requests to set the environment variables
+                for variable, value in env.iteritems():
+                    data = common.NS(variable) + common.NS(value)
+                    connection.sendRequest(session, 'env', data)
                 return connection.sendRequest(session, 'exec',
                                               command, wantReply=1)
             return sessionOpenDeferred
