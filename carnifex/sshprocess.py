@@ -26,16 +26,28 @@ class SSHProcessInductor(ProcessInductor):
 
     def execute(self, processProtocol, executable, args=(), env={},
                 path=None, uid=None, gid=None, usePTY=0, childFDs=None):
+        """Execute a process on the remote machine using SSH
+
+        @param processProtocol: the ProcessProtocol instance to connect
+        @param executable: the executable program to run
+        @param args: the arguments to pass to the process
+        @param env: environment variables to request the remote ssh server to set
+        @param path: the remote path to start the remote process on
+        @param uid: user id or username to connect to the ssh server with
+        @param gid: this is not used for remote ssh processes
+        @param usePTY: wither to request a pty for the process
+        @param childFDs: file descriptors to use for stdin, stdout and stderr
+        """
+
+        args = args or (executable,)
+        cmdline = quoteArguments(args)
+
+        # Get the username from a uid, or use current user
         uid = uid or os.getuid()
         if isinstance(uid, int):
             user = pwd.getpwuid(uid).pw_name
         else:
             user = uid
-
-        args = args or (executable, )
-        cmdline = quoteArguments(args)
-        command = common.NS(cmdline)
-#        command = common.NS(' '.join(args))
 
         sessionOpenDeferred = defer.Deferred()
         session = SSHSession(sessionOpenDeferred, processProtocol)
@@ -51,8 +63,10 @@ class SSHProcessInductor(ProcessInductor):
                 for variable, value in env.iteritems():
                     data = common.NS(variable) + common.NS(value)
                     connection.sendRequest(session, 'env', data)
+                # Send request to exec the command line
                 return connection.sendRequest(session, 'exec',
-                                              command, wantReply=1)
+                                              common.NS(cmdline),
+                                              wantReply=True)
             return sessionOpenDeferred
 
         return session
