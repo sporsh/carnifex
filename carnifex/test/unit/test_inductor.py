@@ -11,7 +11,7 @@ fauxProcessData = [(stdout, 'some output'),
 class InductorTest(TestCase):
     def test_run(self):
         inductor = MockProcessInductor(None, fauxProcessData)
-        result = inductor.run(executable='foo')
+        result = inductor.run(command='foo')
         @result.addCallback
         def check_result(result):
             expected_stdout = ''.join([data for fd, data in fauxProcessData
@@ -24,7 +24,7 @@ class InductorTest(TestCase):
 
     def test_getOutput(self):
         inductor = MockProcessInductor(None, fauxProcessData)
-        output = inductor.getOutput(executable='foo')
+        output = inductor.getOutput(command='foo')
         @output.addCallback
         def check_output(result):
             expected_stdout = ''.join([data for fd, data in fauxProcessData
@@ -35,7 +35,7 @@ class InductorTest(TestCase):
     def test_getExitCode(self):
         expectedExitCode = 47
         inductor = MockProcessInductor(None, fauxProcessData, exitCode=expectedExitCode)
-        output = inductor.getExitCode(executable='foo')
+        output = inductor.getExitCode(command='foo')
         @output.addCallback
         def checkExitCode(exitCode):
             self.assertEqual(exitCode, expectedExitCode)

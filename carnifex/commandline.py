@@ -2,18 +2,13 @@ import shlex
 import pipes
 from utils import attr_string
 
-def parseCommandLine(commandLine, **kwargs):
-    """Utility method for generating arguments for executing a command.
-    In essence, this will generate the 'executable' and 'args' arguments for you.
+
+def createPosixCommand(commandLine):
+    """Utility method for generating a posix command from a command line string
 
     @param commandLine: The command line string to parse into arguments
-    @param kwargs: Additional arguments for execution (eg. 'env', 'uid', etc.)
     """
-    #TODO: Make this parse redirection of file descriptors (i.e. 2>&1 etc.) to a childFDs map?
-    args = shlex.split(commandLine)
-    kwargs['executable'] = args[0]
-    kwargs['args'] = args
-    return kwargs
+    return PosixCommand(*shlex.split(commandLine))
 
 
 class Command(object):

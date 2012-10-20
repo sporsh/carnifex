@@ -5,30 +5,29 @@ from twisted.internet.protocol import ProcessProtocol
 class ProcessInductor(object):
     """Creates and follow up processes of local or remotely executed commands.
     """
-
-    def execute(self, processProtocol, executable, args=(), env={},
+    def execute(self, processProtocol, command, env={},
                 path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         """Form a command and start a process in the desired environment.
         """
         raise NotImplementedError()
 
-    def run(self, executable, args=(), env={}, path=None,
+    def run(self, command, env={}, path=None,
             uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a command and return the results of the completed run.
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args, env,
+        self.execute(processProtocol, command, env,
                      path, uid, gid, usePTY, childFDs)
         return deferred
 
-    def getOutput(self, executable, args=(), env={}, path=None,
+    def getOutput(self, command, env={}, path=None,
                   uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a command and get the output of the finished process.
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args, env,
+        self.execute(processProtocol, command, env,
                      path, uid, gid, usePTY, childFDs)
         @deferred.addCallback
         def getStdOut(tuple_):
@@ -36,14 +35,14 @@ class ProcessInductor(object):
             return stdout
         return deferred
 
-    def getExitCode(self, executable, args=(), env={}, path=None,
-                      uid=None, gid=None, usePTY=0, childFDs=None):
+    def getExitCode(self, command, env={}, path=None, uid=None, gid=None,
+                    usePTY=0, childFDs=None):
         """Execute a command and get the return code of the finished process.
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, executable, args, env,
-                     path, uid, gid, usePTY, childFDs)
+        self.execute(processProtocol, command, env, path, uid, gid,
+                     usePTY, childFDs)
         @deferred.addCallback
         def getStdOut(tuple_):
             _stdout, _stderr, exitCode = tuple_

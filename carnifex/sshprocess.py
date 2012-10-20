@@ -2,7 +2,6 @@ import os
 import pwd
 import struct
 from twisted.python import failure
-from twisted.python.win32 import quoteArguments
 from twisted.internet import defer
 from twisted.internet.error import ProcessDone, ProcessTerminated
 from twisted.internet.protocol import ClientFactory
@@ -13,18 +12,23 @@ from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.channel import SSHChannel
 from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
+from commandline import SSHCommand
 from carnifex.inductor import ProcessInductor
 
 
 class SSHProcessInductor(ProcessInductor):
+    _sep = ';' # '&&' to fail fast or ';' to continue on fails
+    _cd = 'cd'
 
-    def __init__(self, reactor, host, port, timeout=30, bindAddress=None):
-        self.reactor = reactor
+    def __init__(self, reactor, host, port, timeout=30, bindAddress=None,
+                 precursor=None):
         self._connections = {}
+        self.reactor = reactor
         self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
                                            bindAddress)
+        self.precursor = precursor # 'source /etc/profile'
 
-    def execute(self, processProtocol, executable, args=(), env={},
+    def execute(self, processProtocol, command, env={},
                 path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         """Execute a process on the remote machine using SSH
 
@@ -39,8 +43,10 @@ class SSHProcessInductor(ProcessInductor):
         @param childFDs: file descriptors to use for stdin, stdout and stderr
         """
 
-        args = args or (executable,)
-        cmdline = quoteArguments(args)
+        if not isinstance(command, SSHCommand):
+            command = SSHCommand(command)
+        commandLine = command.getCommandLine(self.precursor, path,
+                                             self._cd, self._sep)
 
         # Get the username from a uid, or use current user
         uid = uid or os.getuid()
@@ -65,7 +71,7 @@ class SSHProcessInductor(ProcessInductor):
                     connection.sendRequest(session, 'env', data)
                 # Send request to exec the command line
                 return connection.sendRequest(session, 'exec',
-                                              common.NS(cmdline),
+                                              common.NS(commandLine),
                                               wantReply=True)
             return sessionOpenDeferred
 

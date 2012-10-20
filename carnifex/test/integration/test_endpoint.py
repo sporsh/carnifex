@@ -32,8 +32,8 @@ class InductorEndpointTestMixin(object):
         expectedGatheredData = [echoTransform(echoText)]
         expectedConnectionLostReason = ConnectionDone
 
-        endpoint = InductorEndpoint(self.inductor, executable=ECHO_COMMAND,
-                                    args=(ECHO_COMMAND, echoText), timeout=1)
+        command = "%s %r" % (ECHO_COMMAND, echoText)
+        endpoint = InductorEndpoint(self.inductor, command=command, timeout=1)
 
         protocolFactory = protocol.ClientFactory()
         protocolFactory.protocol = GatherProtocol

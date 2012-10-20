@@ -6,4 +6,3 @@ from sshprocess import SSHProcessInductor
 from endpoint import InductorEndpoint
 
 # Utility methods
-from commandline import parseCommandLine

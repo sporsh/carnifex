@@ -8,11 +8,11 @@ from twisted.python.failure import Failure
 class InductorEndpoint(object):
     """Endpoint that connects to a process spawned by an inductor.
     """
-    def __init__(self, inductor, executable, args=(), env={}, path=None,
+    def __init__(self, inductor, command, env={}, path=None,
                  uid=None, gid=None, usePTY=0, childFDs=None, timeout=None):
         self.inductor = inductor
         self.timeout = timeout
-        self.inductorArgs = (executable, args, env, path, uid, gid, usePTY, childFDs)
+        self.inductorArgs = (command, env, path, uid, gid, usePTY, childFDs)
 
     def connect(self, protocolFactory):
         """Starts a process and connect a protocol to it.
