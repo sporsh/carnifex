@@ -58,14 +58,29 @@ class PosixCommand(Command):
 
 
 class SSHCommand(Command):
-    def getCommandLine(self, precursor=None, path=None, cd='cd', sep=';'):
+    """Representation of a command to send to a remote machine for execution.
+
+    @ivar cd:: The command used to change working directory (usually 'cd')
+    @ivar sep: Operator to join the precursor, cd command and command line
+               Usually ';' (or '&&') for bash like command lines.
+    """
+
+    cd = 'cd'
+    sep = ';'
+
+    def __init__(self, command, precursor=None, path=None):
         """
         @param precursor: Precursor to the command line (eg. 'source /etc/profile')
-        @param cd: The command used to change working directory (usually 'cd')
-        @param sep: Syntax for separating several commands in one command line.
-                    Usually '&&' or ;' for bash like command lines.
+        @param path: The path to change directory to before execution
         """
-        commandLine = precursor + sep if precursor else ''
-        commandLine += cd + ' ' + path + sep if path else ''
+        Command.__init__(self, command)
+        self.precursor = precursor
+        self.path = path
+
+    def getCommandLine(self):
+        """Insert the precursor and change directory commands
+        """
+        commandLine = self.precursor + self.sep if self.precursor else ''
+        commandLine += self.cd + ' ' + self.path + self.sep if self.path else ''
         commandLine += str(self.command)
         return commandLine
