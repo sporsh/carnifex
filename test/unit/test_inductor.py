@@ -1,5 +1,5 @@
 from twisted.trial.unittest import TestCase
-from carnifex.test.unit.mocks import MockProcessInductor
+from mocks import MockProcessInductor
 
 stdout, stderr = 1, 2
 fauxProcessData = [(stdout, 'some output'),

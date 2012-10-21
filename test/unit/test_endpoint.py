@@ -2,7 +2,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.error import ConnectionDone
 from twisted.internet import protocol, defer, reactor
 from carnifex.endpoint import InductorEndpoint
-from carnifex.test.unit.mocks import MockProcessInductor
+from mocks import MockProcessInductor
 
 stdout, stderr = 1, 2
 
