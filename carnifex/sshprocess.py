@@ -6,10 +6,10 @@ from twisted.conch.ssh import connection, common
 from twisted.conch.ssh.connection import SSHConnection
 from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
-from commandline import SSHCommand
 from carnifex.inductor import ProcessInductor
 from carnifex.ssh.client import SSHClientFactory
 from carnifex.ssh.session import SSHSession
+from carnifex.ssh.command import SSHCommand
 
 
 class SSHProcessInductor(ProcessInductor):
@@ -39,10 +39,9 @@ class SSHProcessInductor(ProcessInductor):
         @param childFDs: file descriptors to use for stdin, stdout and stderr
         """
 
-        if not isinstance(command, SSHCommand):
-            command = SSHCommand(command)
-        commandLine = command.getCommandLine(self.precursor, path,
-                                             self._cd, self._sep)
+        sshCommand = (command if isinstance(command, SSHCommand)
+                      else SSHCommand(command, self.precursor, path))
+        commandLine = sshCommand.getCommandLine()
 
         # Get the username from a uid, or use current user
         uid = uid or os.getuid()

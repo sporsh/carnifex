@@ -1,5 +1,6 @@
 from twisted.trial.unittest import TestCase
-from carnifex.commandline import SSHCommand, PosixCommand
+from carnifex.commandline import PosixCommand
+from carnifex.ssh.command import SSHCommand
 
 class PosixCommandTest(TestCase):
     def test_posix_command_from_command_line(self):
