@@ -1,11 +1,9 @@
 import os
 import pwd
 from twisted.internet import defer
-from twisted.internet.protocol import ClientFactory
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.conch.ssh import connection, common
 from twisted.conch.ssh.connection import SSHConnection
-from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
 from commandline import SSHCommand
@@ -116,15 +114,3 @@ class SSHProcessInductor(ProcessInductor):
 
     def __del__(self):
         self.disconnectAll()
-
-
-class SSHClientFactory(ClientFactory):
-    def __init__(self, verifyHostKey, userAuthObject):
-        self.verifyHostKey = verifyHostKey
-        self.userAuthObject = userAuthObject
-
-    def buildProtocol(self, addr):
-        trans = SSHClientTransport()
-        trans.verifyHostKey = self.verifyHostKey
-        trans.connectionSecure = lambda: trans.requestService(self.userAuthObject)
-        return trans
