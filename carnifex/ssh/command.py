@@ -1,6 +1,6 @@
-from carnifex.command import Command
+from carnifex.command import PosixCommand
 
-class SSHCommand(Command):
+class SSHCommand(PosixCommand):
     """Representation of a command to send to a remote machine for execution.
 
     @ivar cd:: The command used to change working directory (usually 'cd')
@@ -16,7 +16,7 @@ class SSHCommand(Command):
         @param precursor: Precursor to the command line (eg. 'source /etc/profile')
         @param path: The path to change directory to before execution
         """
-        Command.__init__(self, command)
+        PosixCommand.__init__(self, command)
         self.precursor = precursor
         self.path = path
 
@@ -25,5 +25,5 @@ class SSHCommand(Command):
         """
         commandLine = self.precursor + self.sep if self.precursor else ''
         commandLine += self.cd + ' ' + self.path + self.sep if self.path else ''
-        commandLine += str(self.command)
+        commandLine += PosixCommand.getCommandLine(self)
         return commandLine
