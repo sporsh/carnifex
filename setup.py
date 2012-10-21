@@ -1,8 +1,10 @@
 from distutils.core import setup
 
+README = open('README', 'r').read()
+
 setup(
       name='carnifex',
-      version='0.1.0',
+      version='0.2.0',
       packages=['carnifex'],
       provides=['carnifex'],
       requires=['Twisted'],
@@ -29,15 +31,5 @@ setup(
                    'Topic :: Software Development :: Libraries :: Python Modules',
                    'Topic :: Terminals'
                    ],
-      long_description="""\
-Carnifex
-========
-
-Carnifex provides an api for executing commands.
-The processes can be started locally or remotely on another machine with
-minimal effort for the user.
-
-The module builds on Twisted and uses Twisted Conch for executing commands
-on a remote machine.
-"""
+      long_description=README
       )

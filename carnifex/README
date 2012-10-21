@@ -1,0 +1,22 @@
+Carnifex
+===============================================================================
+
+Carnifex provides an api for executing commands.
+The processes can be started locally or remotely on another machine with
+minimal effort for the user.
+
+The module builds on Twisted and uses Twisted Conch for executing commands
+on a remote machine.
+
+
+Changes
+*******************************************************************************
+Version 0.2.0
+-------------------------------------------------------------------------------
+- API change: execute, run, getOutput and getExitCode now take a command object
+  or a string for the command to execute instead of executable and args.
+
+Version 0.1.0
+-------------------------------------------------------------------------------
+- Executing and running processes locally and remotely via ssh is supported.
+- Initial alpha release

@@ -1,1 +1,3 @@
 include README.md
+include fabfile.py
+recursive-include test *.py
