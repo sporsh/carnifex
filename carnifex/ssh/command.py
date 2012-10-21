@@ -1,4 +1,4 @@
-from carnifex.commandline import Command
+from carnifex.command import Command
 
 class SSHCommand(Command):
     """Representation of a command to send to a remote machine for execution.

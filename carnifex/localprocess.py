@@ -1,5 +1,5 @@
 from carnifex.inductor import ProcessInductor
-from carnifex.commandline import PosixCommand
+from carnifex.command import PosixCommand
 
 
 class LocalProcessInductor(ProcessInductor):
