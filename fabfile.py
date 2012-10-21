@@ -16,3 +16,24 @@ def release():
 
 def clean():
     local("python setup.py clean")
+
+def whatsnew():
+    local("git fetch")
+
+    locallog = local("git log --abbrev-commit "
+                     "--format='%Cgreen* %C(yellow)%h %Cblue%aN %Cgreen%ar "
+                     "%Creset%s' FETCH_HEAD..", capture=True)
+    remotelog = local("git log --abbrev-commit "
+                      "--format='%Cred* %C(yellow)%h %Cblue%aN %Cgreen%ar "
+                      "%Creset%s' ..FETCH_HEAD", capture=True)
+
+    if locallog:
+        print
+        print "YOUR CHANGES:"
+        print "-------------"
+        print locallog
+    if remotelog:
+        print
+        print "REMOTE CHANGES:"
+        print "---------------"
+        print remotelog
