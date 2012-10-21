@@ -8,6 +8,7 @@ from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
 from commandline import SSHCommand
 from carnifex.inductor import ProcessInductor
+from carnifex.ssh.client import SSHClientFactory
 from carnifex.ssh.session import SSHSession
 
 
