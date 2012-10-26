@@ -1,5 +1,6 @@
 from carnifex.inductor import ProcessInductor
 from carnifex.command import PosixCommand
+from twisted.internet import defer
 
 
 class LocalProcessInductor(ProcessInductor):
@@ -13,8 +14,10 @@ class LocalProcessInductor(ProcessInductor):
         posixCommand = (command if isinstance(command, PosixCommand)
                                 else PosixCommand(command))
 
-        return self.reactor.spawnProcess(processProtocol,
-                                         posixCommand.executable,
-                                         posixCommand.args,
-                                         env, path, uid, gid,
-                                         usePTY, childFDs)
+        process = self.reactor.spawnProcess(processProtocol,
+                                            posixCommand.executable,
+                                            posixCommand.args,
+                                            env, path, uid, gid,
+                                            usePTY, childFDs)
+
+        return defer.succeed(process)

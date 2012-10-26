@@ -17,8 +17,9 @@ class ProcessInductor(object):
         """
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
-        self.execute(processProtocol, command, env,
+        d = defer.maybeDeferred(self.execute, processProtocol, command, env,
                      path, uid, gid, usePTY, childFDs)
+        d.addErrback(deferred.errback)
         return deferred
 
     def getOutput(self, command, env={}, path=None,
