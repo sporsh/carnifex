@@ -1,10 +1,62 @@
 import struct
 from twisted.python import failure
+from twisted.internet import defer
 from twisted.internet.error import ProcessTerminated, ProcessDone
 from twisted.conch.ssh import common, connection
 from twisted.conch.ssh.channel import SSHChannel
 from twisted.internet.interfaces import IProcessTransport
 from zope.interface.declarations import implements
+
+
+def execSession(connection, protocol, commandLine, env={}, usePTY=None):
+    return connectSession(connection, protocol, 'exec', common.NS(commandLine),
+                          env, usePTY)
+
+def connectSession(connection, protocol, sessionType, sessionData='',
+                   env={}, usePTY=None):
+    sessionOpenDeferred = defer.Deferred()
+    session = SSHSession(protocol)
+    connection.openChannel(session)
+    def sessionOpened(specificData):
+        protocol.makeConnection(session)
+        requestEnv(connection, session, env)
+        if usePTY:
+            requestPty(connection, session)
+        deferred = connection.sendRequest(session, sessionType, sessionData,
+                                          wantReply=True)
+        deferred.chainDeferred(sessionOpenDeferred)
+    session.channelOpen = sessionOpened
+    session.openFailed = sessionOpenDeferred.errback
+    return sessionOpenDeferred
+
+def requestPty(connection, session, term='vt100', columns=0, rows=0, width=0,
+               height=0, modes=''):
+    """Request allocation of a pseudo-terminal for a session
+
+    @param session: recipient session channel
+    @param term: TERM environment variable value (e.g., vt100)
+    @param columns: terminal width, characters (e.g., 80)
+    @param rows: terminal height, rows (e.g., 24)
+    @param width: terminal width, pixels (e.g., 640)
+    @param height: terminal height, pixels (e.g., 480)
+    @param modes: encoded terminal modes
+
+    The dimension parameters are only informational.
+    Zero dimension parameters are ignored. The columns/rows dimensions
+    override the pixel dimensions (when nonzero). Pixel dimensions refer
+    to the drawable area of the window.
+    """
+    #TODO: Needs testing!
+    dimensions = common.NS(struct.pack('>4L', columns, rows, width, height))
+    data = common.NS(term) + dimensions + common.NS(modes)
+    connection.sendRequest(session, 'pty-req', data, wantReply=False)
+
+def requestEnv(connection, session, env={}):
+    """Send requests to set the environment variables
+    """
+    for variable, value in env.iteritems():
+        data = common.NS(variable) + common.NS(value)
+        connection.sendRequest(session, 'env', data)
 
 
 class SSHSession(SSHChannel):
