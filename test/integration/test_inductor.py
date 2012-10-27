@@ -9,6 +9,8 @@ from carnifex.ssh.client import TooManyAuthFailures
 
 UID = None # indicate that we want to run processes as the current user.
 PASSWORD = None or getpass() # Set password here, or we will launch a prompt
+# These credentials should fail:
+WRONG_USER, WRONG_PASSWORD = 'nouser', 'wrongpassword'
 
 SUCCEEDING_COMMAND = 'true' # `true`should return exitcode 0
 FAILING_COMMAND = 'false' # `false`should return a nonzero exitcode
@@ -65,13 +67,13 @@ class InductorTestMixin(object):
         protocol = ProcessProtocol()
         protocol.processEnded = disconnectedDeferred.callback
         resultDeferred = self.inductor.run(command, uid=UID)
+        resultDeferred.addErrback(self.fail)
         @resultDeferred.addCallback
         def checkResult((r_stdoutText, r_stderrText, r_exitCode)):
             self.assertEqual(r_stdoutText, stdoutText, "stdout not as expected")
             self.assertEqual(r_stderrText, stderrText, "stderr not as expected")
             self.assertEqual(r_exitCode, exitCode, "unexpected exit code")
         return resultDeferred
-
 
 class LocalProcessInductorTest(TestCase, InductorTestMixin):
     def setUp(self):
@@ -82,11 +84,21 @@ class LocalProcessInductorTest(TestCase, InductorTestMixin):
 class SSHProcessInductorTest(TestCase, InductorTestMixin):
     """This test need to authenticate the connect to an ssh server.
     """
+
     def setUp(self):
         from twisted.internet import reactor
         host, port = 'localhost', 22
         self.inductor = SSHProcessInductor(reactor, host, port)
         self.inductor.setCredentials(UID, PASSWORD)
+
+    def test_authentication_failure(self):
+        """Check that we get auth failure with wring credentials.
+        """
+        self.inductor.setCredentials(WRONG_USER, WRONG_PASSWORD)
+        protocol = ProcessProtocol()
+        processDeferred = self.inductor.execute(protocol, SUCCEEDING_COMMAND,
+                                                uid=WRONG_USER)
+        return self.assertFailure(processDeferred, TooManyAuthFailures)
 
     def tearDown(self):
         inductor = self.inductor
