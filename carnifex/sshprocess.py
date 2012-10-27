@@ -43,15 +43,7 @@ class SSHProcessInductor(ProcessInductor):
                       else SSHCommand(command, self.precursor, path))
         commandLine = sshCommand.getCommandLine()
 
-        # Get the username from a uid, or use current user
-        uid = uid or os.getuid()
-        if isinstance(uid, int):
-            user = pwd.getpwuid(uid).pw_name
-        else:
-            user = uid
-
-        sessionOpenDeferred = defer.Deferred()
-        session = SSHSession(sessionOpenDeferred, processProtocol)
+        user = self._getUser(uid)
 
         # Get connection to ssh server
         connectionDeferred = self.getConnection(user)
@@ -112,5 +104,13 @@ class SSHProcessInductor(ProcessInductor):
         connection = self._connections[user]
         connection.transport.loseConnection()
 
+    def _getUser(self, uid):
+        # Get the username from a uid, or use current user
+        uid = uid or self._defaultUser or os.getuid()
+        if isinstance(uid, int):
+            user = pwd.getpwuid(uid).pw_name
+        else:
+            user = uid
+        return user
     def __del__(self):
         self.disconnectAll()
