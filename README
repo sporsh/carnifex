@@ -13,6 +13,9 @@ Changes
 *******************************************************************************
 Version 0.2.0
 -------------------------------------------------------------------------------
+- Added support for authenticating with stored credentials when using
+  remote process inductor
+- Added support for specifying valid known hosts to allow with remote execution
 - API change: execute, run, getOutput and getExitCode now take a command object
   or a string for the command to execute instead of executable and args.
 
