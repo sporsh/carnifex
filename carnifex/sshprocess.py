@@ -4,12 +4,12 @@ from twisted.internet import defer
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.conch.ssh import connection, common
 from twisted.conch.ssh.connection import SSHConnection
-from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
 from carnifex.inductor import ProcessInductor
 from carnifex.ssh.client import SSHClientFactory
 from carnifex.ssh.session import SSHSession
 from carnifex.ssh.command import SSHCommand
+from carnifex.ssh.userauth import AutomaticUserAuthClient
 
 
 class UnknownHostKey(Exception):
@@ -29,15 +29,24 @@ allHostKeys = AllHostKeys()
 class SSHProcessInductor(ProcessInductor):
     _sep = ';' # '&&' to fail fast or ';' to continue on fails
     _cd = 'cd'
+    _defaultUser = None
     knownHosts = allHostKeys
 
     def __init__(self, reactor, host, port, timeout=30, bindAddress=None,
-                 precursor=None):
+                 precursor=None, credentials=None):
         self._connections = {}
         self.reactor = reactor
         self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
                                            bindAddress)
         self.precursor = precursor # 'source /etc/profile'
+        self.credentials = credentials or {}
+
+    def setCredentials(self, uid, password=None, privateKey=None, publicKey=None):
+        user = self._getUser(uid)
+        credentials = self.credentials.setdefault(user, {})
+        credentials['password'] = password
+        credentials['privateKey'] = privateKey
+        credentials['publicKey'] = publicKey
 
     def addKnownHost(self, hostKey, fingerprint):
         if self.knownHosts == allHostKeys:
@@ -132,6 +141,21 @@ class SSHProcessInductor(ProcessInductor):
         else:
             user = uid
         return user
+
+    def _getCredentials(self, user):
+        return self.credentials.get(user, dict(password=None,
+                                               privateKey=None,
+                                               publicKey=None))
+
+    def _getUserAuthObject(self, user, connection):
+        """Get a SSHUserAuthClient object to use for authentication
+
+        @param user: The username to authenticate for
+        @param connection: The connection service to start after authentication
+        """
+        credentials = self._getCredentials(user)
+        userAuthObject = AutomaticUserAuthClient(user, connection, **credentials)
+        return userAuthObject
 
     def _verifyHostKey(self, hostKey, fingerprint):
         """Called when ssh transport requests us to verify a given host key.
