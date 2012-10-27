@@ -12,9 +12,24 @@ from carnifex.ssh.session import SSHSession
 from carnifex.ssh.command import SSHCommand
 
 
+class UnknownHostKey(Exception):
+    """Raised when we reject validation of a server's host key
+    """
+    pass
+
+
+class AllHostKeys(object):
+    """Placeholder for known hosts container to allow all host keys.
+    """
+    def __contains__(self, key):
+        return True
+allHostKeys = AllHostKeys()
+
+
 class SSHProcessInductor(ProcessInductor):
     _sep = ';' # '&&' to fail fast or ';' to continue on fails
     _cd = 'cd'
+    knownHosts = allHostKeys
 
     def __init__(self, reactor, host, port, timeout=30, bindAddress=None,
                  precursor=None):
@@ -23,6 +38,11 @@ class SSHProcessInductor(ProcessInductor):
         self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
                                            bindAddress)
         self.precursor = precursor # 'source /etc/profile'
+
+    def addKnownHost(self, hostKey, fingerprint):
+        if self.knownHosts == allHostKeys:
+            self.knownHosts = {}
+        self.knownHosts[fingerprint] = hostKey
 
     def execute(self, processProtocol, command, env={},
                 path=None, uid=None, gid=None, usePTY=0, childFDs=None):
@@ -112,5 +132,15 @@ class SSHProcessInductor(ProcessInductor):
         else:
             user = uid
         return user
+
+    def _verifyHostKey(self, hostKey, fingerprint):
+        """Called when ssh transport requests us to verify a given host key.
+        Return a deferred that callback if we accept the key or errback if we
+        decide to reject it.
+        """
+        if fingerprint in self.knownHosts:
+            return defer.succeed(True)
+        return defer.fail(UnknownHostKey(hostKey, fingerprint))
+
     def __del__(self):
         self.disconnectAll()
