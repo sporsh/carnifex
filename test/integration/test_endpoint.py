@@ -4,9 +4,12 @@ from twisted.internet.error import ConnectionDone
 from twisted.internet import protocol, defer
 from carnifex.endpoint import InductorEndpoint
 from carnifex.sshprocess import SSHProcessInductor
+from getpass import getpass
 
 
 UID = None # indicate that we want to run processes as the current user.
+PASSWORD = None or getpass() # Set password here, or we will launch a prompt
+
 ECHO_COMMAND = 'echo' # 'echo` should echo back on stdout
 # `echo` return an additional newline after the given text to echo.
 echoTransform = lambda text: text + '\n'
@@ -62,10 +65,16 @@ class LocalProcessInductorEndpointTest(TestCase, InductorEndpointTestMixin):
 
 
 class SSHInductorEndpointTest(TestCase, InductorEndpointTestMixin):
+    @classmethod
+    def setUpClass(cls):
+        from getpass import getpass
+        cls.password = PASSWORD
+
     def setUp(self):
         from twisted.internet import reactor
         host, port = 'localhost', 22
         self.inductor = SSHProcessInductor(reactor, host, port)
+        self.inductor.setCredentials(UID, self.password)
 
     def tearDown(self):
         inductor = self.inductor

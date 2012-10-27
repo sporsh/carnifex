@@ -1,15 +1,14 @@
 import os
 import pwd
+from twisted.python import failure
 from twisted.internet import defer
 from twisted.internet.endpoints import TCP4ClientEndpoint
-from twisted.conch.ssh import connection, common
-from twisted.conch.ssh.connection import SSHConnection
-from twisted.conch.client.options import ConchOptions
+from twisted.conch.ssh import connection
 from carnifex.inductor import ProcessInductor
 from carnifex.ssh.client import SSHClientFactory
-from carnifex.ssh.session import SSHSession
 from carnifex.ssh.command import SSHCommand
 from carnifex.ssh.userauth import AutomaticUserAuthClient
+from carnifex.ssh.session import execSession
 
 
 class UnknownHostKey(Exception):
@@ -76,62 +75,44 @@ class SSHProcessInductor(ProcessInductor):
 
         # Get connection to ssh server
         connectionDeferred = self.getConnection(user)
-        @connectionDeferred.addCallback
-        def executeCommand(connection):
-            connection.openChannel(session)
-            @sessionOpenDeferred.addCallback
-            def sessionOpened(specificData):
-                # Send requests to set the environment variables
-                for variable, value in env.iteritems():
-                    data = common.NS(variable) + common.NS(value)
-                    connection.sendRequest(session, 'env', data)
-                # Send request to exec the command line
-                return connection.sendRequest(session, 'exec',
-                                              common.NS(commandLine),
-                                              wantReply=True)
-            return sessionOpenDeferred
-
-        return session
+        connectionDeferred.addCallback(execSession, processProtocol,
+                                       commandLine, env, usePTY)
+        return connectionDeferred
 
     def getConnection(self, user):
-        options = ConchOptions()
-        verifyHostKey = lambda *a, **kwa: defer.succeed(True)
+        #TODO: Fix case where we try to get another connection to the same user
+        # before the first has connected...
+        connection = self._connections.get(user, None)
+        if connection:
+            return defer.succeed(connection)
+        # This will be called back if we already are in the process of connecting
+        self._connections[user] = failure.Failure(Exception("Already trying to connect"))
+        return self.startConnection(user)
 
+    def startConnection(self, user):
         serviceStartedDeferred = defer.Deferred()
-        serviceStoppedDeferred = defer.Deferred()
-        connection = SSHConnection()
-        connection.serviceStarted = lambda: serviceStartedDeferred.callback(None)
-        connection.serviceStopped = lambda: serviceStoppedDeferred.callback(None)
-        @serviceStartedDeferred.addCallback
-        def connectionServiceStarted(result):
-            self._connections[user] = connection
-            self._disconnectDeferred = serviceStoppedDeferred
-            return connection
-        @serviceStoppedDeferred.addCallback
-        def connectionServiceStopped(result):
-            del self._connections[user]
-
-        userAuthObject = SSHUserAuthClient(user, options, connection)
+        connectionService = connection.SSHConnection()
+        def serviceStarted():
+            self._connections[user] = connectionService
+            serviceStartedDeferred.callback(connectionService)
+        connectionService.serviceStarted = serviceStarted
 
         connectionLostDeferred = defer.Deferred()
-        sshClientFactory = SSHClientFactory(verifyHostKey, userAuthObject)
-        sshClientFactory.clientConnectionFailed = lambda _, reason: serviceStartedDeferred.errback(reason)
-        sshClientFactory.clientConnectionLost = connectionLostDeferred.errback
+        userAuthObject = self._getUserAuthObject(user, connectionService)
+        sshClientFactory = SSHClientFactory(connectionLostDeferred,
+                                            self._verifyHostKey, userAuthObject)
+        @connectionLostDeferred.addBoth
+        def connectionLost(reason):
+            serviceStartedDeferred.called or serviceStartedDeferred.errback(reason)
+            self._connections[user] = None
 
-        connectionDeferred = self.endpoint.connect(sshClientFactory)
-        @connectionDeferred.addCallback
-        def connected(transport):
-            self._transport = transport
-            return serviceStartedDeferred
-        return connectionDeferred
+        self.endpoint.connect(sshClientFactory)
+        return serviceStartedDeferred
 
     def disconnectAll(self):
         for connection in self._connections.values():
-            connection.transport.loseConnection()
-
-    def disconnectUser(self, user):
-        connection = self._connections[user]
-        connection.transport.loseConnection()
+            if hasattr(connection, 'transport'):
+                connection.transport.loseConnection()
 
     def _getUser(self, uid):
         # Get the username from a uid, or use current user

@@ -17,15 +17,15 @@ disconnectErrors = {2: TooManyAuthFailures}
 
 
 class SSHClientFactory(ClientFactory):
-    def __init__(self, verifyHostKey, userAuthObject):
+    def __init__(self, deferred, verifyHostKey, userAuthObject):
+        self.deferred = deferred
         self.verifyHostKey = verifyHostKey
         self.userAuthObject = userAuthObject
 
     def buildProtocol(self, addr):
-        trans = SSHClientTransport()
-        trans.verifyHostKey = self.verifyHostKey
-        trans.connectionSecure = lambda: trans.requestService(self.userAuthObject)
-        return trans
+        transport = SSHTransport(self.deferred, self.userAuthObject,
+                             self.verifyHostKey)
+        return transport
 
 
 class SSHTransport(SSHClientTransport):

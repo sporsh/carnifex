@@ -4,8 +4,11 @@ from carnifex.sshprocess import SSHProcessInductor
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet.error import ProcessTerminated, ProcessDone
 from carnifex.localprocess import LocalProcessInductor
+from getpass import getpass
+from carnifex.ssh.client import TooManyAuthFailures
 
 UID = None # indicate that we want to run processes as the current user.
+PASSWORD = None or getpass() # Set password here, or we will launch a prompt
 
 SUCCEEDING_COMMAND = 'true' # `true`should return exitcode 0
 FAILING_COMMAND = 'false' # `false`should return a nonzero exitcode
@@ -17,35 +20,40 @@ class InductorTestMixin(object):
         """Check that we get the expected reason failure object
         when a process exits with exit code 0.
         """
-        disconnectedDeferred = defer.Deferred()
+        processEndedDeferred = defer.Deferred()
         protocol = ProcessProtocol()
-        protocol.processEnded = disconnectedDeferred.callback
-        self.inductor.execute(protocol, SUCCEEDING_COMMAND, uid=UID)
-        return self.assertFailure(disconnectedDeferred, ProcessDone)
+        protocol.processEnded = processEndedDeferred.callback
+        processDeferred = self.inductor.execute(protocol, SUCCEEDING_COMMAND,
+                                                uid=UID)
+        self.assertFailure(processEndedDeferred, ProcessDone)
+        return defer.DeferredList([processDeferred, processEndedDeferred],
+                                  fireOnOneErrback=True)
 
     def test_execute_nonzero_exitcode(self):
         """Check that we get the expected failure when a process exits
         with a nonzero exit code.
         """
-        disconnectedDeferred = defer.Deferred()
+        processEndedDeferred = defer.Deferred()
         protocol = ProcessProtocol()
-        protocol.processEnded = disconnectedDeferred.callback
-        self.inductor.execute(protocol, FAILING_COMMAND, uid=UID)
+        protocol.processEnded = processEndedDeferred.callback
+        processDeferred = self.inductor.execute(protocol, FAILING_COMMAND,
+                                                uid=UID)
         # Process should return a ProcessTerminated failure
         # when it exits with a nonzero exit code
-        @disconnectedDeferred.addErrback
+        self.assertFailure(processEndedDeferred, ProcessTerminated)
+        @processEndedDeferred.addErrback
         def checkExitCode(failure):
             exitCode = failure.value.exitCode
             self.assertNotEqual(exitCode, 0)
-            return failure
-        return self.assertFailure(disconnectedDeferred, ProcessTerminated)
+        return defer.DeferredList([processDeferred, processEndedDeferred],
+                                  fireOnOneErrback=True)
 
     def test_run_stdout_stderr_exit(self):
         """Check that we get the expected stdout, stderr and exit code
         """
         stdoutText = "output out o text"
         stderrText = "error err e text"
-        exitCode = 47
+        exitCode = 42
         pythonScript = ("import sys;"
                         "sys.stdout.write('%s');"
                         "sys.stderr.write('%s');"
@@ -78,6 +86,7 @@ class SSHProcessInductorTest(TestCase, InductorTestMixin):
         from twisted.internet import reactor
         host, port = 'localhost', 22
         self.inductor = SSHProcessInductor(reactor, host, port)
+        self.inductor.setCredentials(UID, PASSWORD)
 
     def tearDown(self):
         inductor = self.inductor

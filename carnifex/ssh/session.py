@@ -68,9 +68,8 @@ class SSHSession(SSHChannel):
     status = -1
     pid = None
 
-    def __init__(self, deferred, protocol, *args, **kwargs):
+    def __init__(self, protocol, *args, **kwargs):
         SSHChannel.__init__(self, *args, **kwargs)
-        self.deferred = deferred
         self.protocol = protocol
 
     def closeStdin(self):
@@ -105,15 +104,6 @@ class SSHSession(SSHChannel):
         """
         signal = common.NS(signal)
         return self.conn.sendRequest(self, 'signal', signal, wantReply=True)
-
-    def channelOpen(self, specificData):
-        # Connect the SSHSessionProcessProtocol
-        self.protocol.makeConnection(self)
-        # Signal that we are opened
-        self.deferred.callback(specificData)
-
-    def openFailed(self, reason):
-        self.deferred.errback(reason)
 
     def closed(self):
         if self.exitCode or self.signal:
