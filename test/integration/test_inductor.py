@@ -7,6 +7,13 @@ from carnifex.localprocess import LocalProcessInductor
 from getpass import getpass
 from carnifex.ssh.client import TooManyAuthFailures
 
+DEBUG = False
+if DEBUG:
+    import sys
+    from twisted.python import log
+    log.startLogging(sys.stdout)
+    defer.Deferred.debug = True
+
 UID = None # indicate that we want to run processes as the current user.
 PASSWORD = None or getpass() # Set password here, or we will launch a prompt
 # These credentials should fail:
