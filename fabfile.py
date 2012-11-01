@@ -38,8 +38,17 @@ def release():
     test()
     local("python setup.py sdist upload")
 
-def clean():
+def clean(verified=False):
     local("python setup.py clean")
+    args = ["git clean",
+            "-dx",
+            "-e '.pydevproject'",
+            "-e '.project'"]
+    if not verified:
+        args.append("-n")
+    else:
+        args.append("-f")
+    local(' '.join(args))
 
 def whatsnew():
     local("git fetch")
