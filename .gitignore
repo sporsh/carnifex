@@ -20,6 +20,7 @@ pip-log.txt
 .coverage
 .tox
 _trial_temp
+cover/
 
 #Translations
 *.mo

@@ -1,14 +1,38 @@
 from fabric.api import local
 
-def unittest():
-    local("python -m unittest discover -s test/unit")
+TESTS_PATH = 'test'
 
-def integrationtest():
-    local("python -m unittest discover -s test/integration")
+def test(path=TESTS_PATH, coverage=False, nosetup=False, *args, **kwargs):
+    nosetests(path, coverage, *args, **kwargs)
+    if not nosetup:
+        local("python setup.py check")
 
-def test():
-    local("python -m unittest discover")
-    local("python setup.py check")
+def nosetests(path=TESTS_PATH, coverage=False):
+    """Run tests using nosetests with or without coverage
+    """
+    args = ["nosetests"]
+    if coverage:
+        args.extend(["--with-coverage",
+                     "--cover-erase",
+                     "--cover-package=carnifex",
+                     "--cover-html"])
+    args.append(path)
+    local(' '.join(args))
+
+def trial(path=TESTS_PATH, coverage=False):
+    """Run tests using trial
+    """
+    args = ['trial']
+    if coverage:
+        args.append('--coverage')
+    args.append(path)
+    print args
+    local(' '.join(args))
+
+def unittest(path=TESTS_PATH):
+    """Run tests using the unittest module
+    """
+    local("python -m unittest discover -s %s" % path)
 
 def release():
     test()
