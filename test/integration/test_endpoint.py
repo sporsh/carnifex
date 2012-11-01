@@ -72,16 +72,11 @@ class LocalProcessInductorEndpointTest(TestCase, InductorEndpointTestMixin):
 
 
 class SSHInductorEndpointTest(TestCase, InductorEndpointTestMixin):
-    @classmethod
-    def setUpClass(cls):
-        from getpass import getpass
-        cls.password = PASSWORD
-
     def setUp(self):
         from twisted.internet import reactor
         host, port = 'localhost', 22
         self.inductor = SSHProcessInductor(reactor, host, port)
-        self.inductor.setCredentials(UID, self.password)
+        self.inductor.setCredentials(UID, PASSWORD)
 
     def tearDown(self):
         inductor = self.inductor
