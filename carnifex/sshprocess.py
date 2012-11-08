@@ -2,7 +2,7 @@ import os
 import pwd
 from twisted.python import failure
 from twisted.internet import defer
-from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.internet.endpoints import clientFromString
 from twisted.conch.ssh import connection
 from carnifex.inductor import ProcessInductor
 from carnifex.ssh.client import SSHClientFactory
@@ -35,8 +35,10 @@ class SSHProcessInductor(ProcessInductor):
                  precursor=None, credentials=None):
         self._connections = {}
         self.reactor = reactor
-        self.endpoint = TCP4ClientEndpoint(reactor, host, port, timeout,
-                                           bindAddress)
+        description = 'tcp:host=%s:port=%i:timeout=%i' % (host, port, timeout)
+        if bindAddress:
+            description += ':bindAddress=%s' % bindAddress
+        self.endpoint = clientFromString(reactor, description)
         self.precursor = precursor # 'source /etc/profile'
         self.credentials = credentials or {}
 
