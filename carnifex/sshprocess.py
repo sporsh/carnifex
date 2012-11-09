@@ -80,7 +80,7 @@ class SSHProcessInductor(ProcessInductor):
                                        commandLine, env, usePTY, childFDs)
         return connectionDeferred
 
-    def getConnection(self, uid):
+    def getConnection(self, uid=None):
         #TODO: Fix case where we try to get another connection to the same user
         # before the first has connected...
         user = self._getUser(uid)
@@ -117,7 +117,7 @@ class SSHProcessInductor(ProcessInductor):
             if hasattr(connection, 'transport'):
                 connection.transport.loseConnection()
 
-    def _getUser(self, uid):
+    def _getUser(self, uid=None):
         # Get the username from a uid, or use current user
         uid = uid or self._defaultUser or os.getuid()
         if isinstance(uid, int):
