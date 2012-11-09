@@ -73,18 +73,17 @@ class SSHProcessInductor(ProcessInductor):
                       else SSHCommand(command, self.precursor, path))
         commandLine = sshCommand.getCommandLine()
 
-        user = self._getUser(uid)
-
         # Get connection to ssh server
-        connectionDeferred = self.getConnection(user)
+        connectionDeferred = self.getConnection(uid)
         # spawn the remote process
         connectionDeferred.addCallback(connectProcess, processProtocol,
                                        commandLine, env, usePTY, childFDs)
         return connectionDeferred
 
-    def getConnection(self, user):
+    def getConnection(self, uid):
         #TODO: Fix case where we try to get another connection to the same user
         # before the first has connected...
+        user = self._getUser(uid)
         connection = self._connections.get(user, None)
         if connection:
             return defer.succeed(connection)
