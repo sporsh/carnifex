@@ -1,5 +1,6 @@
 from twisted.internet.protocol import ClientFactory
-from twisted.conch.ssh.transport import SSHClientTransport
+from twisted.conch.ssh.transport import SSHClientTransport,\
+    DISCONNECT_PROTOCOL_ERROR
 from twisted.internet.error import ConnectionClosed
 
 
@@ -13,7 +14,8 @@ class TooManyAuthFailures(DisconnectError):
     """Too many authentication failures for user
     """
 
-disconnectErrors = {2: TooManyAuthFailures}
+# Mapping of reason codes to sensible disconnect error types
+disconnectErrors = {DISCONNECT_PROTOCOL_ERROR: TooManyAuthFailures}
 
 
 class SSHClientFactory(ClientFactory):
@@ -35,6 +37,10 @@ class SSHTransport(SSHClientTransport):
         self.verifyHostKey = verifyHostKey
 
     def receiveError(self, reasonCode, description):
+        """
+        Called when we receive a disconnect error message from the other
+        side.
+        """
         error = disconnectErrors.get(reasonCode, DisconnectError)
         self.connectionClosed(error(reasonCode, description))
         SSHClientTransport.receiveError(self, reasonCode, description)
