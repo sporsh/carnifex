@@ -109,7 +109,11 @@ class SSHProcessInductor(ProcessInductor):
             serviceStartedDeferred.called or serviceStartedDeferred.errback(reason)
             self._connections[user] = None
 
-        self.endpoint.connect(sshClientFactory)
+        connectionMadeDeferred = self.endpoint.connect(sshClientFactory)
+        @connectionMadeDeferred.addErrback
+        def connectionFailed(failure):
+            serviceStartedDeferred.called or serviceStartedDeferred.callback(failure)
+
         return serviceStartedDeferred
 
     def disconnectAll(self):

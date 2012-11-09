@@ -2,7 +2,8 @@ from twisted.internet import defer
 from twisted.trial.unittest import TestCase
 from carnifex.sshprocess import SSHProcessInductor
 from twisted.internet.protocol import ProcessProtocol
-from twisted.internet.error import ProcessTerminated, ProcessDone
+from twisted.internet.error import ProcessTerminated, ProcessDone,\
+    ConnectionRefusedError
 from carnifex.localprocess import LocalProcessInductor
 from getpass import getpass
 from carnifex.ssh.client import TooManyAuthFailures
@@ -106,6 +107,15 @@ class SSHProcessInductorTest(TestCase, InductorTestMixin):
         processDeferred = self.inductor.execute(protocol, SUCCEEDING_COMMAND,
                                                 uid=WRONG_USER)
         return self.assertFailure(processDeferred, TooManyAuthFailures)
+
+    def test_connection_refused(self):
+        """Check that connection refused errors are handeled correctly.
+        """
+        from twisted.internet import reactor
+        host, port = 'localhost', 1 # Use a port that is not open for connection
+        self.inductor = SSHProcessInductor(reactor, host, port)
+        deferred = self.inductor.getConnection()
+        return self.assertFailure(deferred, ConnectionRefusedError)
 
     def tearDown(self):
         inductor = self.inductor
