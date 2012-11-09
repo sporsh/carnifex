@@ -2,6 +2,7 @@ import struct
 from twisted.internet import defer
 from twisted.conch.ssh import common
 from twisted.conch.ssh.channel import SSHChannel
+from twisted.internet.protocol import connectionDone
 
 
 def connectExec(connection, protocol, commandLine):
@@ -42,11 +43,12 @@ def connectSession(connection, protocol, sessionFactory=None, *args, **kwargs):
     factory = sessionFactory or defaultSessionFactory
     session = factory(*args, **kwargs)
     session.dataReceived = protocol.dataReceived
-    session.closed = protocol.connectionLost
+    session.closed = lambda: protocol.connectionLost(connectionDone)
 
     deferred = defer.Deferred()
     @deferred.addCallback
-    def returnSession(specificData):
+    def connectProtocolAndReturnSession(specificData):
+        protocol.makeConnection(session)
         return session
     session.sessionOpen = deferred.callback
     session.openFailed = deferred.errback
