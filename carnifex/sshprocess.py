@@ -3,7 +3,7 @@ import pwd
 from twisted.python import failure
 from twisted.internet import defer
 from twisted.internet.endpoints import clientFromString
-from twisted.conch.ssh import connection
+from twisted.conch.ssh.connection import SSHConnection
 from carnifex.inductor import ProcessInductor
 from carnifex.ssh.client import SSHClientFactory
 from carnifex.ssh.command import SSHCommand
@@ -94,7 +94,7 @@ class SSHProcessInductor(ProcessInductor):
 
     def startConnection(self, user):
         serviceStartedDeferred = defer.Deferred()
-        connectionService = connection.SSHConnection()
+        connectionService = SSHConnection()
         def serviceStarted():
             self._connections[user] = connectionService
             serviceStartedDeferred.callback(connectionService)
