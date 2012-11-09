@@ -87,8 +87,9 @@ class SSHProcessInductor(ProcessInductor):
         connection = self._connections.get(user, None)
         if connection:
             return defer.succeed(connection)
-        # This will be called back if we already are in the process of connecting
-        self._connections[user] = failure.Failure(Exception("Already trying to connect"))
+        # This will be called back if we already started connecting the user
+        self._connections[user] = failure.Failure(Exception("Already trying to "
+                                                            "connect %r" % user))
         return self.startConnection(user)
 
     def startConnection(self, user):

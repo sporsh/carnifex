@@ -5,6 +5,7 @@ from twisted.internet.protocol import ProcessProtocol
 class ProcessInductor(object):
     """Creates and follow up processes of local or remotely executed commands.
     """
+
     def execute(self, processProtocol, command, env={},
                 path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         """Form a command and start a process in the desired environment.
@@ -18,7 +19,7 @@ class ProcessInductor(object):
         deferred = defer.Deferred()
         processProtocol = _SummaryProcessProtocol(deferred)
         d = defer.maybeDeferred(self.execute, processProtocol, command, env,
-                     path, uid, gid, usePTY, childFDs)
+                                path, uid, gid, usePTY, childFDs)
         d.addErrback(deferred.errback)
         return deferred
 

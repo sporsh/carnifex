@@ -29,12 +29,12 @@ class MockProcessInductor(ProcessInductor):
     def __init__(self, reactor, fauxProcessData, exitCode=0):
         self.reactor = reactor
         self.fauxProcessData = fauxProcessData
-        self.exitCode = exitCode
+        self._exitCode = exitCode
 
     def execute(self, processProtocol, executable, args=(), env={},
                 path=None, uid=None, gid=None, usePTY=0, childFDs=None):
         process = MockProcess(processProtocol)
         process.run(self.fauxProcessData)
         processProtocol.makeConnection(process)
-        process.exit(self.exitCode)
+        process.exit(self._exitCode)
         return process
