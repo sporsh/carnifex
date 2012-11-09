@@ -4,6 +4,9 @@ from twisted.internet.error import ProcessTerminated, ProcessDone
 
 
 class MockProcess(BaseProcess):
+    data = []
+    write = data.append
+
     def run(self, fauxProcessData):
         for childFd, data in fauxProcessData:
             self.proto.childDataReceived(childFd, data)

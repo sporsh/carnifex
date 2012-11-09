@@ -25,6 +25,7 @@ class InductorEndpointTest(TestCase):
         class MockProtocol(protocol.Protocol):
             data = []
             def dataReceived (self, data):
+                self.transport.write(data)
                 self.data.append(data)
             def connectionLost (self, reason):
                 connDeferred.callback(reason)

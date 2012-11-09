@@ -87,7 +87,7 @@ class RelayTransport(object):
         self.protocol.makeConnection(self)
 
     def _getTransport(self):
-        return getattr(self.connector.proces, 'transport')
+        return getattr(self.connector.process, 'transport')
 
     def write(self, data):
         transport = self._getTransport()
