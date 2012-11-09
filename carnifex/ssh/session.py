@@ -1,11 +1,7 @@
 import struct
-from twisted.python import failure
 from twisted.internet import defer
-from twisted.internet.error import ProcessTerminated, ProcessDone
-from twisted.conch.ssh import common, connection
+from twisted.conch.ssh import common
 from twisted.conch.ssh.channel import SSHChannel
-from twisted.internet.interfaces import IProcessTransport
-from zope.interface.declarations import implements
 
 
 def execSession(connection, protocol, commandLine, env={}, usePTY=None):
@@ -60,99 +56,70 @@ def requestEnv(connection, session, env={}):
 
 
 class SSHSession(SSHChannel):
-    implements(IProcessTransport)
-
     name = 'session'
-    exitCode = None
-    signal = None
-    status = -1
-    pid = None
 
-    def __init__(self, protocol, *args, **kwargs):
+    def __init__(self, env, usePTY, *args, **kwargs):
         SSHChannel.__init__(self, *args, **kwargs)
-        self.protocol = protocol
+        self.env = env
+        self.usePTY = usePTY
 
-    def closeStdin(self):
-        self.closeChildFD(0)
-
-    def closeStdout(self):
-        self.closeChildFD(1)
-
-    def closeStderr(self):
-        self.closeChildFD(2)
-
-    def closeChildFD(self, descriptor):
-        if descriptor == 0:
-            self.conn.sendEOF(self)
-
-    def writeToChild(self, childFD, data):
-        if childFD == 0:
-            self.write(data)
-
-    def loseConnection(self):
-        self.closeStdin()
-        self.closeStderr()
-        self.closeStdout()
-        SSHChannel.loseConnection(self)
-
-    def signalProcess(self, signal):
-        """Deliver a signal to the remote process/service.
-
-        @param signal: signal name (without the "SIG" prefix)
-        @warning: Some systems may not implement signals,
-                  in which case they SHOULD ignore this message.
+    def sessionOpen(self, specificData):
+        """Called when the session opened successfully
         """
-        signal = common.NS(signal)
-        return self.conn.sendRequest(self, 'signal', signal, wantReply=True)
 
-    def closed(self):
-        if self.exitCode or self.signal:
-            reason = failure.Failure(ProcessTerminated(self.exitCode,
-                                                       self.signal,
-                                                       self.status))
-        else:
-            reason = failure.Failure(ProcessDone(status=self.status))
-        protocol = self.protocol
-        del self.protocol
-        protocol.processEnded(reason)
+    def channelOpen(self, specificData):
+        # Request environment variables for the session if specified
+        self.requestEnv(self.env)
+        # Request pty for the session if desired
+        if self.usePTY:
+            self.requestPty()
 
-    def dataReceived(self, data):
-            self.protocol.childDataReceived(1, data)
+        self.sessionOpen(specificData)
 
-    def extReceived(self, dataType, data):
-        if dataType == connection.EXTENDED_DATA_STDERR:
-            self.protocol.childDataReceived(2, data)
-        else:
-            #TODO: Warn about dropped unrecognized data?!
-            pass
-
-    def request_exit_status(self, data):
-        """Called when the command running at the other end terminates with an
-        exit status.
-
-        @param data: The ssh message
-
-        byte      SSH_MSG_CHANNEL_REQUEST
-        uint32    recipient channel
-        string    "exit-status"
-        boolean   FALSE
-        uint32    exit_status
+    def requestShell(self):
+        """Request a shell and return a deferred reply.
         """
-        self.exitCode = int(struct.unpack('>L', data)[0])
+        return self.sendRequest('shell', data='', wantReply=True)
 
-    def request_exit_signal(self, data):
-        """Called when remote command terminate violently due to a signal.
-
-        @param data:  The ssh message
-
-        byte      SSH_MSG_CHANNEL_REQUEST
-        uint32    recipient channel
-        string    "exit-signal"
-        boolean   FALSE
-        string    signal name (without the "SIG" prefix)
-        boolean   core dumped
-        string    error message in ISO-10646 UTF-8 encoding
-        string    language tag [RFC3066]
+    def requestExec(self, commandLine):
+        """Request execution of :commandLine: and return a deferred reply.
         """
-        #TODO: Implement this properly
-        self.signal = data
+        data = common.NS(commandLine)
+        return self.sendRequest('exec', data, wantReply=True)
+
+    def requestSubsystem(self, subsystem):
+        """Request a subsystem and return a deferred reply.
+        """
+        data = common.NS(subsystem)
+        return self.sendRequest('subsystem', data, wantReply=True)
+
+    def requestPty(self, term='vt100', columns=0, rows=0, width=0, height=0, modes=''):
+        """Request allocation of a pseudo-terminal for a channel
+
+        @param term: TERM environment variable value (e.g., vt100)
+        @param columns: terminal width, characters (e.g., 80)
+        @param rows: terminal height, rows (e.g., 24)
+        @param width: terminal width, pixels (e.g., 640)
+        @param height: terminal height, pixels (e.g., 480)
+        @param modes: encoded terminal modes
+
+        The dimension parameters are only informational.
+        Zero dimension parameters are ignored. The columns/rows dimensions
+        override the pixel dimensions (when nonzero). Pixel dimensions refer
+        to the drawable area of the window.
+        """
+        #TODO: Needs testing!
+        dimensions = common.NS(struct.pack('>4L', columns, rows, width, height))
+        data = common.NS(term) + dimensions + common.NS(modes)
+        return self.sendRequest('pty-req', data)
+
+    def requestEnv(self, env={}):
+        """Send requests to set the environment variables for the channel
+        """
+        for variable, value in env.iteritems():
+            data = common.NS(variable) + common.NS(value)
+            self.sendRequest('env', data)
+
+    def sendRequest(self, requestType, data, wantReply=False):
+        assert self.conn, "Channel must be opened to send requests"
+        return self.conn.sendRequest(self, requestType, data, wantReply)
