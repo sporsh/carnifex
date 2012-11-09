@@ -8,7 +8,7 @@ from carnifex.inductor import ProcessInductor
 from carnifex.ssh.client import SSHClientFactory
 from carnifex.ssh.command import SSHCommand
 from carnifex.ssh.userauth import AutomaticUserAuthClient
-from carnifex.ssh.session import execSession
+from carnifex.ssh.process import connectProcess
 
 
 class UnknownHostKey(Exception):
@@ -77,8 +77,9 @@ class SSHProcessInductor(ProcessInductor):
 
         # Get connection to ssh server
         connectionDeferred = self.getConnection(user)
-        connectionDeferred.addCallback(execSession, processProtocol,
-                                       commandLine, env, usePTY)
+        # spawn the remote process
+        connectionDeferred.addCallback(connectProcess, processProtocol,
+                                       commandLine, env, usePTY, childFDs)
         return connectionDeferred
 
     def getConnection(self, user):
