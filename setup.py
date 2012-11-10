@@ -4,7 +4,7 @@ README = open('README', 'r').read()
 
 setup(
       name='carnifex',
-      version='0.2.0',
+      version='0.2.1',
       packages=['carnifex'],
       provides=['carnifex'],
       requires=['Twisted'],

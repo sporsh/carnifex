@@ -11,6 +11,13 @@ on a remote machine.
 
 Changes
 *******************************************************************************
+Version 0.2.1
+-------------------------------------------------------------------------------
+- More flexible connection support for ssh inductor (e.g. IPv6)
+- API for connecting Protocol to various SSH sessions ('shell', 'exec'
+  and 'subsystem')
+- Bug fixes
+
 Version 0.2.0
 -------------------------------------------------------------------------------
 - Added support for authenticating with stored credentials when using
