@@ -104,15 +104,13 @@ class SSHProcessInductor(ProcessInductor):
         userAuthObject = self._getUserAuthObject(user, connectionService)
         sshClientFactory = SSHClientFactory(connectionLostDeferred,
                                             self._verifyHostKey, userAuthObject)
-        @connectionLostDeferred.addBoth
-        def connectionLost(reason):
-            serviceStartedDeferred.called or serviceStartedDeferred.errback(reason)
-            self._connections[user] = None
 
+        def connectionEnded(reason):
+            self._connections[user] = None
+            serviceStartedDeferred.called or serviceStartedDeferred.errback(reason)
+        connectionLostDeferred.addBoth(connectionEnded)
         connectionMadeDeferred = self.endpoint.connect(sshClientFactory)
-        @connectionMadeDeferred.addErrback
-        def connectionFailed(failure):
-            serviceStartedDeferred.called or serviceStartedDeferred.callback(failure)
+        connectionMadeDeferred.addErrback(connectionEnded)
 
         return serviceStartedDeferred
 
