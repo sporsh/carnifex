@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 import shlex
 import pipes
 from utils import attr_string

@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 from twisted.internet.endpoints import _WrappingFactory
 from twisted.internet.base import BaseConnector
 from twisted.internet.protocol import ProcessProtocol, connectionDone

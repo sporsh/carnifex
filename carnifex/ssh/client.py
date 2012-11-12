@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 from twisted.internet.protocol import ClientFactory
 from twisted.conch.ssh.transport import SSHClientTransport,\
     DISCONNECT_PROTOCOL_ERROR

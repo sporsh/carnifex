@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 from carnifex.command import PosixCommand
 
 class SSHCommand(PosixCommand):

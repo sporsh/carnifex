@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 from carnifex.inductor import ProcessInductor
 from carnifex.command import PosixCommand
 from twisted.internet import defer

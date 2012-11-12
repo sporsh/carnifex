@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 import struct
 from zope.interface.declarations import implements
 from twisted.python import failure

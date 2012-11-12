@@ -9,6 +9,13 @@ The module builds on Twisted and uses Twisted Conch for executing commands
 on a remote machine.
 
 
+License
+*******************************************************************************
+
+Carnifex is made available under the MIT license. See the included LICENSE file
+for details.
+
+
 Changes
 *******************************************************************************
 Version 0.2.1

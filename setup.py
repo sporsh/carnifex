@@ -13,6 +13,8 @@ setup(
       author_email='gksporsh@gmail.com',
       url='http://github.com/sporsh/carnifex',
 
+      license='MIT',
+
       description="Execute commands and run processes locally and remote",
       classifiers=[
                    'Programming Language :: Python',
@@ -21,6 +23,7 @@ setup(
                    'Intended Audience :: Developers',
                    'Intended Audience :: Information Technology',
                    'Intended Audience :: System Administrators',
+                   'License :: OSI Approved :: MIT License',
                    'Operating System :: OS Independent',
                    'Topic :: Internet',
                    'Topic :: Security',

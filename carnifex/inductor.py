@@ -1,3 +1,8 @@
+"""
+@author: Geir Sporsheim
+@license: see LICENCE for details
+"""
+
 from twisted.internet import defer
 from twisted.internet.protocol import ProcessProtocol
 
