@@ -1,11 +1,11 @@
 from distutils.core import setup
-
 README = open('README', 'r').read()
 
 setup(
       name='carnifex',
-      version='0.2.1',
-      packages=['carnifex'],
+      version='0.2.2',
+      packages=['carnifex',
+                'carnifex.ssh',],
       provides=['carnifex'],
       requires=['Twisted'],
 
