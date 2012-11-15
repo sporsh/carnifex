@@ -1,3 +1,13 @@
+"""Example that run local and remote process concurrently and relay output.
+
+A local process is started concurrently with a remote process.
+All output from the two processes are relayed to the parent process (the
+process executing this script).
+
+The sub-processes we start is the execution of a simple python script that
+print to stdout and stderr and exit with a exit code.
+"""
+
 import sys
 from getpass import getpass
 from twisted.internet import reactor, defer
@@ -11,7 +21,8 @@ remote_host, remote_port = 'localhost', 22
 remote_user, remote_password = None, getpass()
 
 
-# Describe a command to run (a simple python script that prints to stdout and stderr)
+# Describe a command to run (a simple python script that prints to stdout
+# and stderr)
 command = ["python", "-c", r"""
 import sys
 sys.stdout.write('standard output\n')    # Write stdout data
@@ -22,12 +33,13 @@ exit(42)                                 # We exit with exit code 42
 
 class RelayProtocol(ProcessProtocol):
     """Trivial process protocol to relay stdout and stderr and report exit code
-    from the child processes to our parent process (the process of this program).
+    from the child processes to our parent process (the process executing
+    this program).
     """
 
     def __init__(self, data_precursor=''):
         """Set up the relay to map stdout and stderr to our parent process
-        @param data_precursor: A precursor so we can tag where the data came from.
+        @param data_precursor: A precursor to tag where the data came from.
         """
         self.outReceived = lambda data: sys.stdout.write(data_precursor+data)
         self.errReceived = lambda data: sys.stderr.write(data_precursor+data)
