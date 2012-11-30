@@ -3,11 +3,12 @@
 @license: see LICENCE for details
 """
 
-import struct
+import os
 from twisted.internet import defer
 from twisted.conch.ssh import common
 from twisted.conch.ssh.channel import SSHChannel
 from twisted.internet.protocol import connectionDone
+from twisted.conch.ssh.session import packRequest_pty_req
 
 
 def connectExec(connection, protocol, commandLine):
@@ -106,7 +107,7 @@ class SSHSession(SSHChannel):
         data = common.NS(subsystem)
         return self.sendRequest('subsystem', data, wantReply=True)
 
-    def requestPty(self, term='vt100', columns=0, rows=0, width=0, height=0, modes=''):
+    def requestPty(self, term=None, rows=0, cols=0, xpixel=0, ypixel=0, modes=''):
         """Request allocation of a pseudo-terminal for a channel
 
         @param term: TERM environment variable value (e.g., vt100)
@@ -122,8 +123,8 @@ class SSHSession(SSHChannel):
         to the drawable area of the window.
         """
         #TODO: Needs testing!
-        dimensions = common.NS(struct.pack('>4L', columns, rows, width, height))
-        data = common.NS(term) + dimensions + common.NS(modes)
+        term = term or os.environ.get('TERM', '')
+        data = packRequest_pty_req(term, (rows, cols, xpixel, ypixel), modes)
         return self.sendRequest('pty-req', data)
 
     def requestEnv(self, env={}):
