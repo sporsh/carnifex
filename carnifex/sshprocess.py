@@ -3,8 +3,7 @@
 @license: see LICENCE for details
 """
 
-import os
-import pwd
+import getpass
 from twisted.python import failure
 from twisted.internet import defer
 from twisted.internet.endpoints import clientFromString
@@ -125,12 +124,9 @@ class SSHProcessInductor(ProcessInductor):
                 connection.transport.loseConnection()
 
     def _getUser(self, uid=None):
-        # Get the username from a uid, or use current user
-        uid = uid or self._defaultUser or os.getuid()
-        if isinstance(uid, int):
-            user = pwd.getpwuid(uid).pw_name
-        else:
-            user = uid
+        user = uid or self._defaultUser or getpass.getuser()
+        assert isinstance(user, basestring), \
+            "uid (%r) must be a username for SSH" % uid
         return user
 
     def _getCredentials(self, user):
