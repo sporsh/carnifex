@@ -1,3 +1,4 @@
+import sys
 from twisted.trial.unittest import TestCase
 from carnifex.localprocess import LocalProcessInductor
 from twisted.internet.error import ConnectionDone
@@ -19,8 +20,10 @@ PASSWORD = None or getpass() # Set password here, or we will launch a prompt
 
 ECHO_COMMAND = 'echo' # 'echo` should echo back on stdout
 # `echo` return an additional newline after the given text to echo.
-echoTransform = lambda text: text + '\n'
-
+if sys.version_info.major <= 2:
+    echoTransform = lambda text: text + '\n'
+else:
+    echoTransform = lambda text: bytes(text, 'ascii') + b'\n'
 
 class GatherProtocol(protocol.Protocol):
     def __init__(self):
@@ -55,7 +58,8 @@ class InductorEndpointTestMixin(object):
             return client.resultDeferred
 
         @clientDeferred.addCallback
-        def checkGatheredData((gatheredData, connectionLostReason)):
+        def checkGatheredData(res):
+            gatheredData, connectionLostReason = res
             self.assertEqual(gatheredData, expectedGatheredData)
             return connectionLostReason
 

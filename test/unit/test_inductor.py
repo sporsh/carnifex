@@ -1,12 +1,19 @@
+import sys
 from twisted.trial.unittest import TestCase
-from mocks import MockProcessInductor
+from .mocks import MockProcessInductor
 
 stdout, stderr = 1, 2
-fauxProcessData = [(stdout, 'some output'),
-                   (stderr, 'error message'),
-                   (stdout, 'info message'),
-                   (stderr, 'os failure')]
+fauxProcessData = [(stdout, b'some output'),
+                   (stderr, b'error message'),
+                   (stdout, b'info message'),
+                   (stderr, b'os failure')]
 
+if sys.version_info.major >= 3:
+    def tostr(text):
+        return str(text, 'utf8')
+else:
+    def tostr(text):
+        return text
 
 class InductorTest(TestCase):
     def test_run(self):
@@ -14,11 +21,12 @@ class InductorTest(TestCase):
         result = inductor.run(command='foo')
         @result.addCallback
         def check_result(result):
-            expected_stdout = ''.join([data for fd, data in fauxProcessData
-                                       if fd is stdout])
-            expected_stderr = ''.join([data for fd, data in fauxProcessData
-                                       if fd is stderr])
-            expected_result = (expected_stdout, expected_stderr, 0)
+            expected_stdout = b''.join([data for fd, data in fauxProcessData
+                                        if fd is stdout])
+            expected_stderr = b''.join([data for fd, data in fauxProcessData
+                                        if fd is stderr])
+            expected_result = (
+                tostr(expected_stdout), tostr(expected_stderr), 0)
             self.assertEqual(result, expected_result)
         return result
 
@@ -27,9 +35,9 @@ class InductorTest(TestCase):
         output = inductor.getOutput(command='foo')
         @output.addCallback
         def check_output(result):
-            expected_stdout = ''.join([data for fd, data in fauxProcessData
-                                       if fd is stdout])
-            self.assertEqual(result, expected_stdout)
+            expected_stdout = b''.join([data for fd, data in fauxProcessData
+                                        if fd is stdout])
+            self.assertEqual(result, tostr(expected_stdout))
         return output
 
     def test_getExitCode(self):

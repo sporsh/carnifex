@@ -4,7 +4,7 @@
 """
 
 import struct
-from zope.interface.declarations import implements
+from zope.interface.declarations import implementer
 from twisted.python import failure
 from twisted.internet.interfaces import IProcessTransport
 from twisted.internet.error import ProcessTerminated, ProcessDone
@@ -34,8 +34,8 @@ def connectProcess(connection, processProtocol, commandLine='', env={},
     return processOpenDeferred
 
 
+@implementer(IProcessTransport)
 class SSHProcess(SSHSession):
-    implements(IProcessTransport)
 
     status = -1
     pid = None
