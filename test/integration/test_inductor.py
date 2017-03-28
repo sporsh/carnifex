@@ -77,7 +77,8 @@ class InductorTestMixin(object):
         resultDeferred = self.inductor.run(command, uid=UID)
         resultDeferred.addErrback(self.fail)
         @resultDeferred.addCallback
-        def checkResult((r_stdoutText, r_stderrText, r_exitCode)):
+        def checkResult(res):
+            r_stdoutText, r_stderrText, r_exitCode = res
             self.assertEqual(r_stdoutText, stdoutText, "stdout not as expected")
             self.assertEqual(r_stderrText, stderrText, "stderr not as expected")
             self.assertEqual(r_exitCode, exitCode, "unexpected exit code")

@@ -3,6 +3,7 @@
 @license: see LICENCE for details
 """
 
+import sys
 import getpass
 from twisted.python import failure
 from twisted.internet import defer
@@ -14,6 +15,8 @@ from carnifex.ssh.command import SSHCommand
 from carnifex.ssh.userauth import AutomaticUserAuthClient
 from carnifex.ssh.process import connectProcess
 
+if sys.version_info.major > 2:
+    basestring = str
 
 class UnknownHostKey(Exception):
     """Raised when we reject validation of a server's host key

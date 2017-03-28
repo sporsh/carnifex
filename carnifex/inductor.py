@@ -3,6 +3,7 @@
 @license: see LICENCE for details
 """
 
+import sys
 from twisted.internet import defer
 from twisted.internet.protocol import ProcessProtocol
 
@@ -81,8 +82,11 @@ class _SummaryProcessProtocol(ProcessProtocol):
             self.errReceived = lambda data: self.bufErr.append(data)
 
     def processEnded(self, reason):
-        stdout = ''.join(getattr(self, 'bufOut', []))
-        stderr = ''.join(getattr(self, 'bufErr', []))
+        stdout = b''.join(getattr(self, 'bufOut', []))
+        stderr = b''.join(getattr(self, 'bufErr', []))
         exitCode = reason.value.exitCode
-        result = (stdout, stderr, exitCode)
+        if sys.version_info.major <= 2:
+            result = (stdout, stderr, exitCode)
+        else:
+            result = (str(stdout, 'utf8'), str(stderr, 'utf8'), exitCode)
         self.deferred.callback(result)

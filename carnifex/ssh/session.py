@@ -130,7 +130,7 @@ class SSHSession(SSHChannel):
     def requestEnv(self, env={}):
         """Send requests to set the environment variables for the channel
         """
-        for variable, value in env.iteritems():
+        for variable, value in env.items():
             data = common.NS(variable) + common.NS(value)
             self.sendRequest('env', data)
 

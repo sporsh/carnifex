@@ -3,10 +3,13 @@
 @license: see LICENCE for details
 """
 
+import sys
 import shlex
 import pipes
-from utils import attr_string
+from .utils import attr_string
 
+if sys.version_info.major > 2:
+    basestring = str
 
 class Command(object):
     def __init__(self, command):
