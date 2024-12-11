@@ -5,7 +5,6 @@
 
 import sys
 import shlex
-import pipes
 from .utils import attr_string
 
 if sys.version_info.major > 2:
@@ -59,7 +58,7 @@ class PosixCommand(Command):
     def getCommandLine(self):
         """Correctly quote the arguments and concatenate into one command line
         """
-        return ' '.join(pipes.quote(arg) for arg in self.args)
+        return ' '.join(shlex.quote(arg) for arg in self.args)
 
     def __str__(self):
         return self.getCommandLine()
