@@ -3,7 +3,7 @@ README = open('README', 'r').read()
 
 setup(
       name='carnifex',
-      version='0.2.5',
+      version='0.2.6',
       packages=['carnifex',
                 'carnifex.ssh',],
       provides=['carnifex'],
